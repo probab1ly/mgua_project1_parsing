@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AI Regulation Monitor · МГЮА</title>
+<meta name="description" content="Мониторинг международного регулирования искусственного интеллекта — МГЮА"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f8f5f0; /* Beige */
+  --bg-dark:#f2eee6;
+  --accent:#8b1a1a; /* Bordeaux */
+  --accent-hover:#6d1414;
+  --secondary:#71717a; /* Gray */
+  --text:#18181b;
+  --text-muted:#52525b;
+  --border:#e4e4e7;
+  --card:#ffffff;
+  --card-hover:#fafafa;
+  --shadow:0 4px 20px rgba(0,0,0,0.05);
+  --glow:0 0 20px rgba(139, 26, 26, 0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── HEADER ── */
+header{
+  background:#ffffff;
+  border-bottom:4px solid var(--accent);
+  padding:0 2rem;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 15px rgba(0,0,0,0.05);
+}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:90px;gap:1rem}
+.logo{display:flex;align-items:center;gap:1.5rem;text-decoration:none}
+.logo-img{height:65px;width:auto;object-fit:contain}
+.logo-text h1{font-size:1.4rem;font-weight:800;color:var(--accent);line-height:1.1;letter-spacing:-0.5px}
+.logo-text span{font-size:.8rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:1.5px}
+
+.header-actions{display:flex;align-items:center;gap:1.5rem}
+#status-badge{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--text-muted);background:var(--bg-dark);border-radius:30px;padding:.4rem 1rem;border:1px solid var(--border)}
+#status-badge.loading{color:var(--accent);border-color:rgba(139,26,26,.35);background:rgba(139,26,26,.06)}
+.user-menu{display:flex;align-items:center;gap:.75rem;font-size:.8rem;color:var(--text-muted)}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--accent);border-radius:8px;padding:.45rem .8rem;font:inherit;font-weight:700;cursor:pointer}
+.logout-btn:hover{border-color:var(--accent);background:rgba(139,26,26,.06)}
+.dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.dot.loading{background:#f59e0b;animation:spin-dot 1s linear infinite}
+@keyframes spin-dot{to{transform:rotate(360deg)}}
+
+#refresh-btn{background:var(--accent);border:none;color:#ffffff;padding:.7rem 1.5rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:.6rem;box-shadow:0 4px 12px rgba(139, 26, 26, 0.2)}
+#refresh-btn:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 6px 18px rgba(139, 26, 26, 0.3)}
+#refresh-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.refresh-banner{
+  display:none;align-items:center;justify-content:center;gap:.7rem;
+  background:var(--accent);color:#fff;font-size:.86rem;font-weight:700;
+  padding:.65rem 1rem;position:sticky;top:90px;z-index:90;
+  box-shadow:0 8px 18px rgba(139,26,26,.18);
+}
+.refresh-banner.active{display:flex}
+.refresh-banner .mini-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+
+/* ── MAIN ── */
+main{max-width:1400px;margin:0 auto;padding:2rem}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:1.5rem;
+  transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:var(--shadow);
+}
+.stat-card:hover{
+  transform:translateY(-5px);
+  border-color:var(--accent);
+  box-shadow:0 12px 30px rgba(0,0,0,0.08);
+}
+.stat-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;font-weight:700}
+.stat-value{font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1}
+.stat-icon{position:absolute;right:1.5rem;bottom:1.5rem;font-size:2.5rem;opacity:.05;transition:all 0.4s}
+.stat-card:hover .stat-icon{opacity:.15;transform:scale(1.1)}
+
+/* ── CONTROLS ── */
+.controls{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center}
+.search-wrap{flex:1;min-width:220px;position:relative}
+.search-wrap input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  color:var(--text);border-radius:10px;padding:.7rem 1rem .7rem 2.8rem;
+  font-size:.9rem;outline:none;transition:all .2s;font-family:inherit;
+  box-shadow:var(--shadow);
+}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139, 26, 26, 0.1)}
+.search-wrap .search-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--secondary);font-size:1rem;pointer-events:none}
+select{
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:.7rem 1.2rem;font-size:.9rem;
+  outline:none;cursor:pointer;font-family:inherit;transition:all .2s;
+  box-shadow:var(--shadow);
+}
+select:focus{border-color:var(--accent)}
+.filter-tag{
+  background:var(--bg-dark);border:1px solid var(--border);
+  color:var(--text-muted);border-radius:8px;padding:.4rem 1rem;
+  font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap;
+  font-weight:600;
+}
+.filter-tag:hover,.filter-tag.active{background:var(--accent);color:#ffffff;border-color:var(--accent)}
+
+/* ── ARTICLES ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.section-title{font-size:1rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.5rem}
+.article-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:1.5rem;cursor:pointer;
+  transition:all .3s ease;position:relative;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.article-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:var(--accent);
+  transform:scaleY(0);transform-origin:top;transition:transform .3s;
+}
+.article-card:hover{border-color:var(--accent);transform:translateX(8px);background:var(--card-hover)}
+.article-card:hover::before{transform:scaleY(1)}
+
+.article-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin-bottom:.8rem}
+.tag{border-radius:6px;padding:.25rem .7rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.tag-country{background:var(--bg-dark);color:var(--accent);border:1px solid var(--border)}
+.tag-category{background:rgba(113, 113, 122, 0.1);color:var(--secondary);border:1px solid var(--border)}
+.tag-source{background:rgba(139, 26, 26, 0.05);color:var(--accent);border:1px solid rgba(139, 26, 26, 0.1);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag-update{background:rgba(16, 185, 129, .08);color:#047857;border:1px solid rgba(16, 185, 129, .18)}
+.article-date{font-size:.75rem;color:var(--text-muted);margin-left:auto;font-weight:500}
+
+.article-title{font-size:1.1rem;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:.7rem}
+.article-summary{font-size:.9rem;color:var(--text-muted);line-height:1.6;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+.article-url{font-size:.78rem;color:var(--accent);margin-top:.75rem;overflow-wrap:anywhere;line-height:1.4}
+.article-url span{color:var(--text-muted);font-weight:700}
+.article-analysis{font-size:.78rem;color:var(--text-muted);margin-top:.7rem;line-height:1.45;background:rgba(139,26,26,.04);border:1px solid rgba(139,26,26,.1);border-radius:8px;padding:.65rem .75rem}
+.article-analysis strong{color:var(--accent)}
+
+.article-footer{display:flex;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+.read-more{font-size:.85rem;color:var(--accent);font-weight:700;text-decoration:none;display:flex;align-items:center;gap:.4rem;transition:all .2s}
+.read-more:hover{color:var(--accent-hover);gap:.6rem}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:2rem;flex-wrap:wrap}
+.page-btn{
+  background:var(--card);border:1px solid var(--border);color:var(--text-muted);
+  border-radius:8px;padding:.4rem .8rem;font-size:.8rem;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.page-btn:hover,.page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.page-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── SIDEBAR ── */
+.layout{display:grid;grid-template-columns:1fr 280px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+.sidebar{display:flex;flex-direction:column;gap:1rem;position:sticky;top:90px}
+.side-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--shadow)}
+.side-title{font-size:.85rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
+
+.country-row{display:flex;align-items:center;gap:.8rem;font-size:.85rem;margin-bottom:.8rem}
+.country-name{color:var(--text-muted);min-width:60px;font-weight:600}
+.bar-track{flex:1;background:var(--bg-dark);border-radius:6px;height:8px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(to right, var(--accent), var(--secondary));border-radius:6px;transition:width .6s ease}
+.bar-count{color:var(--accent);font-size:.8rem;min-width:24px;text-align:right;font-weight:800}
+
+.source-list{display:flex;flex-direction:column;gap:.4rem}
+.source-item{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-muted);padding:.35rem .5rem;border-radius:7px;transition:background .2s}
+.source-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.source-flag{font-size:.9rem;width:20px;text-align:center}
+
+/* ── EMPTY / LOADING ── */
+.empty{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
+.empty-icon{font-size:3rem;margin-bottom:1rem;opacity:.4}
+.loader{display:flex;flex-direction:column;align-items:center;gap:1rem;padding:3rem;color:var(--text-muted)}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:.75rem 1.25rem;
+  font-size:.82rem;color:var(--text);
+  transform:translateY(100px);opacity:0;
+  transition:all .3s;z-index:9999;
+  display:flex;align-items:center;gap:.6rem;
+}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── FOOTER ── */
+footer{text-align:center;padding:2rem;color:var(--text-muted);font-size:.75rem;border-top:1px solid var(--border);margin-top:3rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="/">
+      <img src="/static/logo.png" alt="МГЮА" class="logo-img">
+      <div class="logo-text">
+        <h1>AI Regulation Monitor</h1>
+        <span>Отдел медиабезопасности МГЮА</span>
+      </div>
+    </a>
+    <div class="header-actions">
+      <div id="status-badge">
+        <div class="dot" id="status-dot"></div>
+        <span id="status-text">Синхронизация...</span>
+      </div>
+      <button id="refresh-btn" onclick="triggerRefresh()">
+        <span>🔄</span> Обновить данные
+      </button>
+      <form class="user-menu" method="post" action="/logout">
+        <span>{{ username }}</span>
+        <button class="logout-btn" type="submit">Выйти</button>
+      </form>
+    </div>
+  </div>
+</header>
+<div id="refresh-banner" class="refresh-banner">
+  <span class="mini-spinner"></span>
+  <span id="refresh-banner-text">Данные обновляются, идет сбор материалов из источников...</span>
+</div>
+
+<main>
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Всего материалов</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-icon">📄</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Источников</div>
+      <div class="stat-value" id="stat-sources">—</div>
+      <div class="stat-icon">🌐</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Стран / регионов</div>
+      <div class="stat-value" id="stat-countries">—</div>
+      <div class="stat-icon">🗺️</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Последнее обновление</div>
+      <div class="stat-value" style="font-size:1rem;margin-top:.25rem" id="stat-updated">—</div>
+      <div class="stat-icon">🕐</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Поиск по заголовку, тексту..." oninput="debounceSearch()"/>
+    </div>
+    <select id="country-filter" onchange="applyCountryFilter()">
+      <option value="">Все страны</option>
+    </select>
+    <select id="category-filter" onchange="applyCategoryFilter()">
+      <option value="">Все категории</option>
+    </select>
+  </div>
+  <div class="controls" id="quick-filters" style="gap:.5rem">
+    <span style="font-size:.75rem;color:var(--text-muted)">Быстрые фильтры:</span>
+  </div>
+
+  <div class="layout">
+    <!-- Articles -->
+    <div>
+      <div class="section-header">
+        <div class="section-title">
+          📰 Новости и нормативные акты
+          <span class="count-badge" id="result-count">0</span>
+        </div>
+      </div>
+      <div id="articles-container">
+        <div class="loader"><div class="spinner"></div><span>Загрузка данных из источников...</span></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="side-card">
+        <div class="side-title">🗺️ По регионам</div>
+        <div class="country-bar" id="country-chart"></div>
+      </div>
+      <div class="side-card">
+        <div class="side-title">📡 Источники</div>
+        <div class="source-list" id="source-list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  МГЮА · Московский государственный юридический университет имени О.Е. Кутафина<br>
+  Отдел медиабезопасности · AI Regulation Monitor v1.0
+</footer>
+
+<div id="toast"></div>
+
+<script>
+const FLAGS = {EU:'🇪🇺',USA:'🇺🇸',UK:'🇬🇧',Canada:'🇨🇦',Australia:'🇦🇺',Singapore:'🇸🇬',Japan:'🇯🇵','South Korea':'🇰🇷',Brazil:'🇧🇷',China:'🇨🇳',Global:'🌐',OECD:'🌐',UNESCO:'🌐'};
+let currentPage = 1, totalPages = 1, searchTimer = null;
+let currentFilter = {type: '', value: ''};
+let refreshPollTimer = null;
+let refreshStartedAt = null;
+
+// ── FETCH ────────────────────────────────────
+async function fetchStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    const badge = document.getElementById('status-badge');
+    if (d.loading) {
+      dot.className = 'dot loading';
+      badge.classList.add('loading');
+      txt.textContent = 'Сбор данных...';
+      setRefreshUi(true);
+    } else {
+      dot.className = 'dot';
+      badge.classList.remove('loading');
+      const upd = d.last_updated ? new Date(d.last_updated).toLocaleString('ru-RU') : '—';
+      txt.textContent = upd;
+      if(!refreshPollTimer) setRefreshUi(false);
+    }
+    document.getElementById('stat-sources').textContent = d.sources_count || '—';
+    document.getElementById('stat-updated').textContent = d.last_updated
+      ? new Date(d.last_updated).toLocaleTimeString('ru-RU') : '—';
+    return d;
+  } catch(e){ return null; }
+}
+
+async function fetchArticles(page=1) {
+  const q = document.getElementById('search-input').value.trim();
+  const params = new URLSearchParams({ page, per_page:20 });
+  if(q) params.set('q', q);
+  if(currentFilter.type === 'country' && currentFilter.value) params.set('country', currentFilter.value);
+  if(currentFilter.type === 'category' && currentFilter.value) params.set('category', currentFilter.value);
+  try {
+    const r = await fetch('/api/articles?' + params);
+    return await r.json();
+  } catch(e){ return {articles:[], total:0, pages:1}; }
+}
+
+async function fetchStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const d = await r.json();
+    const s = d.stats || {};
+    document.getElementById('stat-total').textContent = s.total || 0;
+    const countries = Object.keys(s.countries || {}).length;
+    document.getElementById('stat-countries').textContent = countries || '—';
+    renderCountryChart(s.countries || {});
+  } catch(e){}
+}
+
+async function fetchFilters() {
+  try {
+    const r = await fetch('/api/filters');
+    const d = await r.json();
+    const cs = document.getElementById('country-filter');
+    const cat = document.getElementById('category-filter');
+    cs.innerHTML = '<option value="">Все страны</option>';
+    cat.innerHTML = '<option value="">Все категории</option>';
+    (d.countries||[]).forEach(c => {
+      const o = document.createElement('option'); o.value=c; o.textContent=(FLAGS[c]||'')+ ' '+c;
+      cs.appendChild(o);
+    });
+    (d.categories||[]).forEach(c => {
+      const o = document.createElement('option'); o.value=c; o.textContent=c;
+      cat.appendChild(o);
+    });
+    renderQuickFilters(d.countries || []);
+  } catch(e){}
+}
+
+async function fetchSources() {
+  try {
+    const r = await fetch('/api/sources');
+    const d = await r.json();
+    const el = document.getElementById('source-list');
+    el.innerHTML = (d.sources||[]).map(s => `
+      <div class="source-item">
+        <span class="source-flag">${s.flag}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(s.description || s.name)}">${escHtml(s.country)} · ${escHtml(s.name)}</span>
+      </div>
+    `).join('');
+  } catch(e){}
+}
+
+// ── RENDER ───────────────────────────────────
+function renderArticles(data) {
+  const container = document.getElementById('articles-container');
+  const {articles=[], total=0, pages=1, page=1} = data;
+  totalPages = pages;
+  currentPage = page;
+  document.getElementById('result-count').textContent = total;
+
+  if (!articles.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>Нет материалов по выбранным фильтрам</p></div>`;
+    renderPagination(1, 1);
+    return;
+  }
+
+  container.innerHTML = articles.map(a => {
+    const date = a.date ? new Date(a.date).toLocaleDateString('ru-RU', {day:'2-digit',month:'short',year:'numeric'}) : '';
+    const flag = FLAGS[a.country] || '🌐';
+    const shortSummary = a.summary || 'Нет описания';
+    const url = a.link || '';
+    const reason = a.analysis_reason || 'Связка ИИ + правовой инструмент + правовое действие';
+    const confidence = a.analysis_confidence ? `${a.analysis_confidence}%` : '—';
+    const aiTerms = Array.isArray(a.matched_ai_terms) ? a.matched_ai_terms.join(', ') : '';
+    const lawTerms = Array.isArray(a.matched_legal_instruments) ? a.matched_legal_instruments.join(', ') : '';
+    const actionTerms = Array.isArray(a.matched_legal_actions) ? a.matched_legal_actions.join(', ') : '';
+    const evidence = [aiTerms && `ИИ: ${aiTerms}`, lawTerms && `Акт: ${lawTerms}`, actionTerms && `Действие: ${actionTerms}`].filter(Boolean).join(' · ');
+    return `
+    <div class="article-card" onclick="window.open('${escJs(a.link)}','_blank','noopener')">
+      <div class="article-meta">
+        <span class="tag tag-country">${flag} ${escHtml(a.country)}</span>
+        <span class="tag tag-category">${escHtml(a.category)}</span>
+        <span class="tag tag-update">${escHtml(a.legal_update_type || 'Правовое регулирование')}</span>
+        <span class="tag tag-source" title="${escHtml(a.source)}">${escHtml(a.source)}</span>
+        <span class="article-date">${date}</span>
+      </div>
+      <div class="article-title">${escHtml(a.title)}</div>
+      <div class="article-summary">${escHtml(shortSummary)}</div>
+      <div class="article-url"><span>URL:</span> ${escHtml(url)}</div>
+      <div class="article-analysis">
+        <strong>Почему отобрано:</strong> ${escHtml(reason)} <strong>Оценка:</strong> ${escHtml(confidence)}
+        ${evidence ? `<br><strong>Найдено:</strong> ${escHtml(evidence)}` : ''}
+      </div>
+      <div class="article-footer">
+        <a class="read-more" href="${escHtml(a.link)}" target="_blank" onclick="event.stopPropagation()">
+          Читать источник →
+        </a>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderPagination(page, pages);
+}
+
+function renderPagination(current, total) {
+  const el = document.getElementById('pagination');
+  if(total <= 1){ el.innerHTML=''; return; }
+  let html = `<button class="page-btn" onclick="goPage(${current-1})" ${current===1?'disabled':''}>← Назад</button>`;
+  const range = Array.from({length:total}, (_,i)=>i+1)
+    .filter(p => p===1 || p===total || Math.abs(p-current)<=2);
+  let prev = null;
+  for (const p of range) {
+    if(prev && p-prev > 1) html += `<span style="color:var(--text-muted);padding:0 .25rem">…</span>`;
+    html += `<button class="page-btn${p===current?' active':''}" onclick="goPage(${p})">${p}</button>`;
+    prev = p;
+  }
+  html += `<button class="page-btn" onclick="goPage(${current+1})" ${current===total?'disabled':''}>Вперёд →</button>`;
+  el.innerHTML = html;
+}
+
+function renderCountryChart(countries) {
+  const el = document.getElementById('country-chart');
+  const max = Math.max(...Object.values(countries), 1);
+  el.innerHTML = Object.entries(countries).map(([k,v]) => `
+    <div class="country-row">
+      <span class="country-name">${FLAGS[k]||'🌐'} ${k}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(v/max*100).toFixed(0)}%"></div></div>
+      <span class="bar-count">${v}</span>
+    </div>`).join('');
+}
+
+// ── ACTIONS ──────────────────────────────────
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escJs(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,''); }
+
+function renderQuickFilters(countries) {
+  const el = document.getElementById('quick-filters');
+  const buttons = countries.map(c => `
+    <button class="filter-tag" data-filter="${escHtml(c)}" onclick="quickFilter('${escJs(c)}')">${FLAGS[c]||'🌐'} ${escHtml(c)}</button>
+  `).join('');
+  el.innerHTML = `
+    <span style="font-size:.75rem;color:var(--text-muted)">Быстрые фильтры:</span>
+    ${buttons}
+    <button class="filter-tag" data-filter="" onclick="quickFilter('')">✕ Сбросить</button>
+  `;
+  setActiveQuickFilter(currentFilter.type === 'country' ? currentFilter.value : '');
+}
+
+function setRefreshUi(isLoading) {
+  const btn = document.getElementById('refresh-btn');
+  const banner = document.getElementById('refresh-banner');
+  const bannerText = document.getElementById('refresh-banner-text');
+  btn.disabled = isLoading;
+  banner.classList.toggle('active', isLoading);
+  if(isLoading && refreshStartedAt) {
+    const seconds = Math.max(1, Math.round((Date.now() - refreshStartedAt) / 1000));
+    bannerText.textContent = `Данные обновляются, идет сбор материалов из источников... ${seconds} сек.`;
+  } else {
+    bannerText.textContent = 'Данные обновляются, идет сбор материалов из источников...';
+  }
+}
+
+async function loadPage(page=1) {
+  document.getElementById('articles-container').innerHTML = `<div class="loader"><div class="spinner"></div><span>Загрузка...</span></div>`;
+  const data = await fetchArticles(page);
+  renderArticles(data);
+}
+
+function goPage(p) {
+  if(p<1||p>totalPages) return;
+  currentPage = p;
+  loadPage(p);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function setActiveQuickFilter(value) {
+  document.querySelectorAll('.filter-tag').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === value && value !== '');
+  });
+}
+
+function applyCountryFilter() {
+  const value = document.getElementById('country-filter').value;
+  currentFilter = value ? {type:'country', value} : {type:'', value:''};
+  document.getElementById('category-filter').value = '';
+  setActiveQuickFilter('');
+  currentPage=1; loadPage(1);
+}
+
+function applyCategoryFilter() {
+  const value = document.getElementById('category-filter').value;
+  currentFilter = value ? {type:'category', value} : {type:'', value:''};
+  document.getElementById('country-filter').value = '';
+  setActiveQuickFilter('');
+  currentPage=1; loadPage(1);
+}
+
+function debounceSearch() { clearTimeout(searchTimer); searchTimer=setTimeout(()=>{currentPage=1;loadPage(1);},400); }
+
+function quickFilter(country) {
+  currentFilter = country ? {type:'country', value:country} : {type:'', value:''};
+  document.getElementById('country-filter').value = '';
+  document.getElementById('category-filter').value = '';
+  setActiveQuickFilter(country);
+  currentPage=1; loadPage(1);
+}
+
+async function triggerRefresh() {
+  refreshStartedAt = Date.now();
+  setRefreshUi(true);
+  document.getElementById('articles-container').innerHTML = `<div class="loader"><div class="spinner"></div><span>Обновление данных: проверяем официальные источники, ленты и правовые базы...</span></div>`;
+  showToast('🔄 Запущен сбор данных из источников...');
+  await fetch('/api/refresh', {method:'POST'});
+  await pollUntilDone();
+}
+
+async function pollUntilDone() {
+  if(refreshPollTimer) clearInterval(refreshPollTimer);
+  refreshPollTimer = setInterval(async () => {
+    const s = await fetchStatus();
+    if(s && !s.loading) {
+      clearInterval(refreshPollTimer);
+      refreshPollTimer = null;
+      await Promise.all([fetchStats(), loadPage(1), fetchFilters()]);
+      refreshStartedAt = null;
+      setRefreshUi(false);
+      showToast('✅ Данные успешно обновлены!');
+    }
+  }, 2500);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 4000);
+}
+
+// ── INIT ─────────────────────────────────────
+async function init() {
+  const status = await fetchStatus();
+  await Promise.all([fetchSources(), fetchFilters()]);
+  if(status && status.total > 0) {
+    await Promise.all([fetchStats(), loadPage(1)]);
+    if(status.loading) await pollUntilDone();
+  } else if(status && status.loading) {
+    refreshStartedAt = Date.now();
+    setRefreshUi(true);
+    document.getElementById('articles-container').innerHTML = `<div class="loader"><div class="spinner"></div><span>Первоначальный сбор данных — это может занять 1–2 минуты...</span></div>`;
+    await pollUntilDone();
+  } else {
+    loadPage(1);
+  }
+
+  // Автообновление статуса каждые 30 сек
+  setInterval(fetchStatus, 30000);
+}
+
+init();
+</script>
+</body>
+</html>
