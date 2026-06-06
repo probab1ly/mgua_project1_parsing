@@ -9,6 +9,7 @@ import re
 import time
 import random
 import concurrent.futures
+import threading
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import urllib.parse
@@ -24,6 +25,12 @@ MAX_WORKERS = 8
 COLLECT_TIMEOUT = 180
 # Берем актуальные материалы минимум за последний год.
 RECENT_DAYS = 365
+
+STRICT_MODE = "strict"
+MONITORING_MODE = "monitoring"
+NLP_STRICT_THRESHOLD = 68
+NLP_MONITORING_THRESHOLD = 52
+FUTURE_DAYS = 365
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -54,6 +61,50 @@ def make_session() -> requests.Session:
     return session
 
 SESSION = make_session()
+
+SOURCE_DIAGNOSTICS: dict[str, dict] = {}
+DIAGNOSTICS_LOCK = threading.Lock()
+
+
+def reset_source_diagnostics() -> None:
+    with DIAGNOSTICS_LOCK:
+        SOURCE_DIAGNOSTICS.clear()
+
+
+def update_source_diagnostic(name: str, **values) -> None:
+    with DIAGNOSTICS_LOCK:
+        item = SOURCE_DIAGNOSTICS.setdefault(name, {
+            "name": name,
+            "status": "running",
+            "raw_count": 0,
+            "candidate_count": 0,
+            "accepted_count": 0,
+            "strict_count": 0,
+            "monitoring_count": 0,
+            "rejected_count": 0,
+            "message": "",
+            "url": "",
+        })
+        item.update(values)
+
+
+def source_diagnostics_snapshot() -> list[dict]:
+    with DIAGNOSTICS_LOCK:
+        return [dict(item) for item in SOURCE_DIAGNOSTICS.values()]
+
+
+def summarize_article_modes(articles: list[dict]) -> dict:
+    strict_count = sum(1 for a in articles if a.get("strict_match"))
+    return {
+        "accepted_count": len(articles),
+        "strict_count": strict_count,
+        "monitoring_count": max(0, len(articles) - strict_count),
+    }
+
+
+def final_source_status(name: str) -> str:
+    current = SOURCE_DIAGNOSTICS.get(name, {}).get("status")
+    return current if current in {"failed", "timeout", "error"} else "ok"
 
 def fix_url(url: str) -> str:
     """Убирает лишние точки и пробелы из URL."""
@@ -294,6 +345,7 @@ ALLOWED_SOURCE_DOMAINS = {
     "www.pdpc.gov.sg",
     "www.tech.gov.sg",
     "www.digital.go.jp",
+    "www8.cao.go.jp",
     "www.meti.go.jp",
     "www.korea.net",
     "www.msit.go.kr",
@@ -374,6 +426,8 @@ AI_SUBJECT_TERMS = [
     "llm", "foundation model", "general purpose ai", "gpai",
     "automated decision", "deepfake", "facial recognition",
     "biometric identification", "high-risk ai", "ai system", "ai systems",
+    "algorithm", "algorithms", "automated decision-making",
+    "agentic ai", "frontier ai", "synthetic media",
 ]
 
 LEGAL_RELEVANCE_TERMS = [
@@ -435,6 +489,25 @@ LEGAL_ACTION_TERMS = [
     "proposed", "draft", "final",
 ]
 
+LEGAL_INTENT_TERMS = [
+    "plans", "plan", "planned", "intends", "intention", "considering",
+    "considers", "expected", "expects", "could", "may", "might",
+    "roadmap", "strategy", "white paper", "green paper", "blueprint",
+    "recommendation", "recommendations", "report calls", "calls for",
+    "urges", "lawmakers", "ministers", "ministry", "government",
+    "regulator", "agency", "parliament", "commission", "committee",
+    "working group", "task force", "public hearing", "stakeholder",
+    "consulting on", "review", "reviewing", "study", "studying",
+    "exploring", "proposal expected", "draft expected",
+]
+
+LEGAL_ACTOR_TERMS = [
+    "government", "parliament", "congress", "senate", "commission",
+    "council", "ministry", "minister", "regulator", "agency",
+    "authority", "department", "committee", "lawmakers", "legislators",
+    "court", "ombudsman", "data protection authority",
+]
+
 AI_SUBJECT_TERMS_LOWER = [term.lower() for term in AI_SUBJECT_TERMS]
 LEGAL_RELEVANCE_TERMS_LOWER = [term.lower() for term in LEGAL_RELEVANCE_TERMS]
 STRONG_AI_REGULATION_TERMS_LOWER = [term.lower() for term in STRONG_AI_REGULATION_TERMS]
@@ -442,6 +515,8 @@ ADOPTION_AND_LEGAL_EVENT_TERMS_LOWER = [term.lower() for term in ADOPTION_AND_LE
 HIGH_VALUE_LEGAL_UPDATE_TERMS_LOWER = [term.lower() for term in HIGH_VALUE_LEGAL_UPDATE_TERMS]
 LEGAL_INSTRUMENT_TERMS_LOWER = [term.lower() for term in LEGAL_INSTRUMENT_TERMS]
 LEGAL_ACTION_TERMS_LOWER = [term.lower() for term in LEGAL_ACTION_TERMS]
+LEGAL_INTENT_TERMS_LOWER = [term.lower() for term in LEGAL_INTENT_TERMS]
+LEGAL_ACTOR_TERMS_LOWER = [term.lower() for term in LEGAL_ACTOR_TERMS]
 
 
 def has_term(text: str, term: str) -> bool:
@@ -565,6 +640,137 @@ def analyze_legal_ai_relevance(title: str, summary: str = "", content: str = "")
     }
 
 
+def classify_legal_ai_nlp(title: str, summary: str = "", content: str = "") -> dict:
+    """
+    Lightweight local NLP classifier for the second validation stage.
+
+    It does not replace the rule filter. It tokenizes the text, checks legal/AI
+    phrase groups, proximity, legal actors and intent signals, then returns a
+    reproducible label and confidence score.
+    """
+    raw_text = f"{title} {summary} {content}"
+    text = re.sub(r"\s+", " ", raw_text.lower()).strip()
+    title_text = re.sub(r"\s+", " ", title.lower()).strip()
+
+    ai_terms = matched_terms(text, AI_SUBJECT_TERMS_LOWER)
+    legal_terms = matched_terms(text, LEGAL_INSTRUMENT_TERMS_LOWER)
+    action_terms = matched_terms(text, LEGAL_ACTION_TERMS_LOWER)
+    intent_terms = matched_terms(text, LEGAL_INTENT_TERMS_LOWER)
+    actor_terms = matched_terms(text, LEGAL_ACTOR_TERMS_LOWER)
+    strong_terms = matched_terms(text, STRONG_AI_REGULATION_TERMS_LOWER)
+    high_value_terms = matched_terms(text, HIGH_VALUE_LEGAL_UPDATE_TERMS_LOWER)
+
+    title_ai = matched_terms(title_text, AI_SUBJECT_TERMS_LOWER)
+    title_legal = matched_terms(title_text, LEGAL_INSTRUMENT_TERMS_LOWER + STRONG_AI_REGULATION_TERMS_LOWER)
+    ai_near_legal = has_nearby_terms(text, AI_SUBJECT_TERMS_LOWER, LEGAL_INSTRUMENT_TERMS_LOWER, 320)
+    ai_near_action = has_nearby_terms(text, AI_SUBJECT_TERMS_LOWER, LEGAL_ACTION_TERMS_LOWER, 320)
+    ai_near_intent = has_nearby_terms(text, AI_SUBJECT_TERMS_LOWER, LEGAL_INTENT_TERMS_LOWER, 360)
+    legal_near_intent = has_nearby_terms(text, LEGAL_INSTRUMENT_TERMS_LOWER, LEGAL_INTENT_TERMS_LOWER, 360)
+
+    confidence = 0
+    reasons = []
+
+    if title_ai:
+        confidence += 20
+        reasons.append("AI topic in title")
+    elif ai_terms:
+        confidence += 12
+        reasons.append("AI topic in text")
+
+    if title_legal:
+        confidence += 16
+        reasons.append("legal term in title")
+    elif legal_terms:
+        confidence += 12
+        reasons.append("legal instrument in text")
+
+    if strong_terms:
+        confidence += 24
+        reasons.append("strong AI-law phrase")
+    if high_value_terms:
+        confidence += 14
+        reasons.append("formal legal update phrase")
+    if action_terms:
+        confidence += 12
+        reasons.append("legal action or procedural stage")
+    if actor_terms:
+        confidence += 8
+        reasons.append("public/legal actor")
+    if intent_terms:
+        confidence += 10
+        reasons.append("legal-policy intent or plan")
+    if ai_near_legal:
+        confidence += 12
+        reasons.append("AI close to legal instrument")
+    if ai_near_action:
+        confidence += 10
+        reasons.append("AI close to legal action")
+    if ai_near_intent and (legal_terms or actor_terms):
+        confidence += 8
+        reasons.append("AI close to policy intent")
+    if legal_near_intent and ai_terms:
+        confidence += 6
+        reasons.append("legal term close to plan/intent")
+
+    strict_candidate = bool(ai_terms) and (
+        bool(strong_terms)
+        or (
+            bool(high_value_terms)
+            and bool(action_terms)
+            and (ai_near_legal or title_ai)
+        )
+        or (
+            bool(legal_terms)
+            and bool(action_terms)
+            and bool(title_ai)
+            and (ai_near_legal or ai_near_action)
+        )
+    )
+    monitoring_candidate = bool(ai_terms) and (
+        bool(strong_terms)
+        or (bool(legal_terms) and (bool(action_terms) or bool(intent_terms) or bool(actor_terms)))
+        or (bool(actor_terms) and bool(intent_terms) and (ai_near_intent or ai_near_legal))
+    )
+
+    if strict_candidate and confidence >= NLP_STRICT_THRESHOLD:
+        label = STRICT_MODE
+    elif monitoring_candidate and confidence >= NLP_MONITORING_THRESHOLD:
+        label = MONITORING_MODE
+    else:
+        label = "reject"
+        if not ai_terms:
+            reasons.append("reject: no explicit AI topic")
+        elif not (legal_terms or strong_terms):
+            reasons.append("reject: no legal instrument")
+        elif not (action_terms or intent_terms or actor_terms or high_value_terms or strong_terms):
+            reasons.append("reject: no legal action, actor or policy intent")
+
+    return {
+        "label": label,
+        "confidence": min(confidence, 100),
+        "reason": "; ".join(reasons),
+        "ai_terms": ai_terms[:8],
+        "legal_terms": legal_terms[:8],
+        "action_terms": action_terms[:8],
+        "intent_terms": intent_terms[:8],
+        "actor_terms": actor_terms[:8],
+    }
+
+
+def is_monitoring_relevant(title: str, summary: str = "") -> bool:
+    analysis = analyze_legal_ai_relevance(title, summary)
+    nlp = classify_legal_ai_nlp(title, summary)
+    return analysis["is_relevant"] or nlp["label"] in {STRICT_MODE, MONITORING_MODE}
+
+
+def passes_article_filter(title: str, text: str, *, allow_monitoring: bool = True) -> bool:
+    analysis = analyze_legal_ai_relevance(title, text)
+    nlp = classify_legal_ai_nlp(title, text)
+    if analysis["is_relevant"] and nlp["label"] in {STRICT_MODE, MONITORING_MODE}:
+        return True
+    return allow_monitoring and nlp["label"] == MONITORING_MODE
+
+
 def relevance_score(title: str, summary: str = "") -> int:
     analysis = analyze_legal_ai_relevance(title, summary)
     text = re.sub(r"\s+", " ", f"{title} {summary}".lower())
@@ -678,6 +884,10 @@ def build_article(
 ) -> dict:
     full_text = f"{summary} {relevance_text}"
     analysis = analyze_legal_ai_relevance(title, full_text)
+    nlp = classify_legal_ai_nlp(title, full_text)
+    temporal_status = date_temporal_status(date)
+    strict_match = analysis["is_relevant"] and nlp["label"] == STRICT_MODE and temporal_status != "future"
+    filter_mode = STRICT_MODE if strict_match else MONITORING_MODE
     return {
         "id": re.sub(r'\W+', '_', link)[:80],
         "title": title,
@@ -690,24 +900,43 @@ def build_article(
         "flag": flag,
         "category": category,
         "source_description": source_description,
+        "date_status": temporal_status,
         "relevance_score": relevance_score(title, full_text),
         "legal_update_type": legal_update_type(title, full_text),
         "legal_priority": legal_priority(title, full_text),
+        "filter_mode": filter_mode,
+        "strict_match": strict_match,
+        "nlp_label": nlp["label"],
+        "nlp_confidence": nlp["confidence"],
+        "nlp_reason": nlp["reason"],
         "analysis_confidence": analysis["confidence"],
         "analysis_reason": analysis["reason"],
         "matched_ai_terms": analysis["ai_terms"],
         "matched_legal_instruments": analysis["legal_instruments"],
         "matched_legal_actions": analysis["legal_actions"],
+        "matched_intent_terms": nlp["intent_terms"],
+        "matched_legal_actors": nlp["actor_terms"],
     }
 
 
 def attach_analysis(article: dict, title: str, text: str) -> dict:
     analysis = analyze_legal_ai_relevance(title, text)
+    nlp = classify_legal_ai_nlp(title, text)
+    temporal_status = date_temporal_status(article.get("date", ""))
+    strict_match = analysis["is_relevant"] and nlp["label"] == STRICT_MODE and temporal_status != "future"
+    article["filter_mode"] = STRICT_MODE if strict_match else MONITORING_MODE
+    article["strict_match"] = strict_match
+    article["date_status"] = temporal_status
+    article["nlp_label"] = nlp["label"]
+    article["nlp_confidence"] = nlp["confidence"]
+    article["nlp_reason"] = nlp["reason"]
     article["analysis_confidence"] = analysis["confidence"]
     article["analysis_reason"] = analysis["reason"]
     article["matched_ai_terms"] = analysis["ai_terms"]
     article["matched_legal_instruments"] = analysis["legal_instruments"]
     article["matched_legal_actions"] = analysis["legal_actions"]
+    article["matched_intent_terms"] = nlp["intent_terms"]
+    article["matched_legal_actors"] = nlp["actor_terms"]
     return article
 
 
@@ -802,13 +1031,26 @@ def to_datetime(value: str) -> datetime:
 def is_recent_date(value: str, days: int = RECENT_DAYS) -> bool:
     dt = to_datetime(value)
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    return dt >= cutoff
+    upper_bound = datetime.now(timezone.utc) + timedelta(days=FUTURE_DAYS)
+    return cutoff <= dt <= upper_bound
+
+
+def date_temporal_status(value: str) -> str:
+    dt = to_datetime(value)
+    now = datetime.now(timezone.utc)
+    if dt > now + timedelta(days=1):
+        return "future"
+    if dt < now - timedelta(days=RECENT_DAYS):
+        return "old"
+    return "current"
 
 
 def clean_html(text: str) -> str:
     """Удаляет HTML-теги из текста."""
     if not text:
         return ""
+    if "<" not in text and "&" not in text:
+        return re.sub(r'\s+', ' ', str(text)).strip()
     soup = BeautifulSoup(text, "html.parser")
     return re.sub(r'\s+', ' ', soup.get_text()).strip() # поиск и замена текста 
 
@@ -816,19 +1058,28 @@ def clean_html(text: str) -> str:
 def fetch_rss(source: dict) -> list[dict]:
     """Загружает и фильтрует записи из RSS/Atom-ленты."""
     articles = []
+    raw_count = 0
+    rejected_count = 0
+    had_error = False
+    update_source_diagnostic(source["name"], status="running", url=source.get("url", ""))
     try:
         if not is_allowed_source_url(source["url"]):
             logger.warning(f"[{source['name']}] Источник не входит в белый список доменов, пропуск")
+            update_source_diagnostic(source["name"], status="failed", message="domain is not in allowlist")
             return []
 
         feed = feedparser.parse(source["url"], agent=HEADERS["User-Agent"], request_headers=HEADERS)
+        raw_count = len(feed.entries)
+        update_source_diagnostic(source["name"], raw_count=raw_count, candidate_count=raw_count)
         logger.info(f"[{source['name']}] Получено записей: {len(feed.entries)}")
 
         if feed.get("status", 200) in (403, 404, 410):
             logger.warning(f"[{source['name']}] Недоступен (HTTP {feed.get('status')}), пропуск")
+            update_source_diagnostic(source["name"], status="failed", message=f"HTTP {feed.get('status')}")
             return []
         if feed.bozo and not feed.entries:
             logger.warning(f"[{source['name']}] Пустая или битая лента, пропуск")
+            update_source_diagnostic(source["name"], status="failed", message="empty or broken feed")
             return []
         
         for entry in feed.entries:
@@ -841,17 +1092,23 @@ def fetch_rss(source: dict) -> list[dict]:
             link = fix_url(raw_link)
 
             if not title or not link or not is_valid_url(link):
+                rejected_count += 1
                 continue
             if not is_allowed_source_url(link):
+                rejected_count += 1
                 continue
             if is_broad_source(source) and not has_primary_ai_signal(title, summary):
+                rejected_count += 1
                 continue
             if not has_explicit_ai_signal(title, summary):
+                rejected_count += 1
                 continue
-            if not is_ai_relevant(title, summary):
+            if not passes_article_filter(title, summary):
+                rejected_count += 1
                 continue
             date = parse_date(entry)
             if not is_recent_date(date):
+                rejected_count += 1
                 continue
 
             article = {
@@ -873,11 +1130,26 @@ def fetch_rss(source: dict) -> list[dict]:
             articles.append(attach_analysis(article, title, summary))
 
     except Exception as e:
+        had_error = True
         if isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
             logger.warning(f"[{source['name']}] Источник не ответил за отведенное время, пропуск: {source['url']}")
+            update_source_diagnostic(source["name"], status="timeout", message="request timeout")
         else:
             logger.error(f"[{source['name']}] Ошибка: {e}")
+            update_source_diagnostic(source["name"], status="error", message=str(e)[:220])
 
+    if had_error:
+        return articles
+    mode_summary = summarize_article_modes(articles)
+    update_source_diagnostic(
+        source["name"],
+        status=final_source_status(source["name"]),
+        raw_count=raw_count,
+        candidate_count=raw_count,
+        rejected_count=rejected_count,
+        message="ok" if articles else "no relevant records after filters",
+        **mode_summary,
+    )
     return articles
 
 
@@ -927,7 +1199,7 @@ def scrape_eurlex_ai() -> list[dict]:
                     continue
                 if not has_explicit_ai_signal(title, relevance_text):
                     continue
-                if not is_ai_relevant(title, relevance_text) and not is_official_ai_law_page(title, relevance_text):
+                if not passes_article_filter(title, relevance_text) and not is_official_ai_law_page(title, relevance_text):
                     continue
                 date = parse_date_text(date_str, r.get_text(" "), title, summary)
                 if not is_recent_date(date):
@@ -994,7 +1266,7 @@ def scrape_congress_ai() -> list[dict]:
                     continue
                 if not has_explicit_ai_signal(title, relevance_text):
                     continue
-                if not is_ai_relevant(title, relevance_text) and not is_official_ai_law_page(title, relevance_text):
+                if not passes_article_filter(title, relevance_text) and not is_official_ai_law_page(title, relevance_text):
                     continue
                 date = parse_date_text(date_tag.get_text() if date_tag else "", item.get_text(" "), title, summary)
                 if not is_recent_date(date):
@@ -1060,7 +1332,7 @@ def scrape_federal_register_ai() -> list[dict]:
                     continue
                 if not has_explicit_ai_signal(title, relevance_text):
                     continue
-                if not is_ai_relevant(title, relevance_text):
+                if not passes_article_filter(title, relevance_text):
                     continue
 
                 seen.add(link)
@@ -1228,7 +1500,7 @@ HTML_SEARCH_SOURCES = [
         "url": "https://www.loc.gov/search/?fa=partof:global+legal+monitor&q=artificial+intelligence",
         "country": "Global",
         "flag": "🌐",
-        "category": "Правовой мониторинг",
+        "category": "Расширенный режим",
         "description": "Global Legal Monitor: официальные правовые обзоры по странам",
         "base_url": "https://www.loc.gov",
     },
@@ -1308,12 +1580,12 @@ OFFICIAL_PAGE_SOURCES = [
         "description": "Singapore approach to AI governance",
     },
     {
-        "name": "Japan Government AI GENAI",
-        "url": "https://www.digital.go.jp/en/policies/gennai",
+        "name": "Japan Cabinet Office AI Act",
+        "url": "https://www8.cao.go.jp/cstp/ai/ai_act/ai_act.html",
         "country": "Japan",
         "flag": "🇯🇵",
         "category": "Госуправление",
-        "description": "Government AI GENAI policy and releases",
+        "description": "Cabinet Office Japan: AI Act materials, legal text and official AI policy documents",
     },
     {
         "name": "South Korea AI Basic Act",
@@ -1336,39 +1608,130 @@ OFFICIAL_PAGE_SOURCES = [
 ALL_SOURCES = RSS_SOURCES + HTML_SEARCH_SOURCES + DIRECT_SEARCH_SOURCES + OFFICIAL_PAGE_SOURCES
 
 
+def extract_page_date(soup: BeautifulSoup, *fallback_parts: str) -> str:
+    selectors = [
+        "meta[property='article:published_time']",
+        "meta[property='article:modified_time']",
+        "meta[name='date']",
+        "meta[name='dcterms.date']",
+        "meta[name='dc.date']",
+        "meta[name='pubdate']",
+        "time[datetime]",
+    ]
+    parts = []
+    for selector in selectors:
+        for tag in soup.select(selector):
+            value = tag.get("content") or tag.get("datetime") or tag.get_text(" ")
+            if value:
+                parts.append(value)
+    parts.extend(fallback_parts)
+    return parse_date_text(*parts)
+
+
+def html_candidate_blocks(soup: BeautifulSoup) -> list:
+    selectors = [
+        "article",
+        "li",
+        ".search-result",
+        ".result",
+        ".views-row",
+        ".card",
+        ".listing-item",
+        ".news-item",
+        ".teaser",
+    ]
+    blocks = []
+    for selector in selectors:
+        blocks.extend(soup.select(selector))
+    return blocks or soup.select("a[href]")
+
+
+def best_link_from_block(block, base_url: str) -> tuple[str, str]:
+    link_tag = block if getattr(block, "name", "") == "a" else block.select_one("a[href]")
+    if not link_tag:
+        return "", ""
+    title = clean_html(link_tag.get_text(" "))
+    if not title:
+        title = clean_html(block.get_text(" "))[:220]
+    href = link_tag.get("href", "")
+    link = fix_url(urllib.parse.urljoin(base_url, href))
+    return title, link
+
+
+def dynamic_html_fallback(url: str) -> str:
+    """
+    Optional browser fallback for JavaScript-heavy sources.
+
+    The project keeps Playwright optional: if it is not installed, diagnostics
+    will show that the static parser was used only.
+    """
+    try:
+        from playwright.sync_api import sync_playwright  # type: ignore
+    except Exception:
+        return ""
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(user_agent=HEADERS["User-Agent"])
+            page.goto(url, wait_until="networkidle", timeout=15000)
+            html = page.content()
+            browser.close()
+            return html
+    except Exception as e:
+        logger.warning(f"[dynamic_html_fallback] Browser fallback failed for {url}: {e}")
+        return ""
+
+
 def scrape_html_search_source(source: dict) -> list[dict]:
     """Собирает ссылки с профильных правовых страниц без RSS."""
     articles = []
     seen = set()
+    candidate_count = 0
+    rejected_count = 0
+    used_browser_fallback = False
+    had_error = False
+    update_source_diagnostic(source["name"], status="running", url=source.get("url", ""))
     try:
         logger.info(f"[{source['name']}] HTML-поиск: {source['url']}")
         resp = SESSION.get(source["url"], timeout=html_timeout_for(source["url"]))
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        for link_tag in soup.select("a[href]"):
-            title = clean_html(link_tag.get_text(" "))
-            href = link_tag.get("href", "")
+        blocks = html_candidate_blocks(soup)
+        if len(blocks) <= 3:
+            dynamic_html = dynamic_html_fallback(source["url"])
+            if dynamic_html:
+                used_browser_fallback = True
+                soup = BeautifulSoup(dynamic_html, "html.parser")
+                blocks = html_candidate_blocks(soup)
+
+        for block in blocks:
+            title, link = best_link_from_block(block, source["base_url"])
             if not title or len(title) < 18:
+                rejected_count += 1
                 continue
 
-            link = urllib.parse.urljoin(source["base_url"], href)
-            link = fix_url(link)
             if link in seen or not is_valid_url(link) or not is_allowed_source_url(link):
+                rejected_count += 1
                 continue
 
-            parent = link_tag.find_parent(["article", "li", "div", "section"]) or link_tag.parent
-            context = clean_html(parent.get_text(" ")) if parent else title
+            candidate_count += 1
+            context = clean_html(block.get_text(" ")) if block else title
             relevance_text = context
             if not has_primary_ai_signal(title, context):
+                rejected_count += 1
                 continue
             if not has_explicit_ai_signal(title, relevance_text):
+                rejected_count += 1
                 continue
-            if not is_ai_relevant(title, relevance_text):
+            if not passes_article_filter(title, relevance_text):
+                rejected_count += 1
                 continue
 
-            date = parse_date_text(context, title, link)
+            date = parse_date_text(context, title, link, extract_page_date(soup, context, title, link))
             if not is_recent_date(date):
+                rejected_count += 1
                 continue
 
             seen.add(link)
@@ -1390,16 +1753,40 @@ def scrape_html_search_source(source: dict) -> list[dict]:
             }
             articles.append(attach_analysis(article, title, relevance_text))
     except Exception as e:
+        had_error = True
         if isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
             logger.warning(f"[{source['name']}] Страница не ответила за отведенное время, пропуск: {source['url']}")
+            update_source_diagnostic(source["name"], status="timeout", message="request timeout")
         else:
             logger.error(f"[{source['name']}] Ошибка HTML-поиска: {e}")
+            update_source_diagnostic(source["name"], status="error", message=str(e)[:220])
 
-    return articles[:30]
+    articles = articles[:30]
+    if had_error:
+        return articles
+    mode_summary = summarize_article_modes(articles)
+    msg = "ok"
+    if not articles:
+        msg = "no relevant HTML candidates after filters"
+        if used_browser_fallback:
+            msg += "; browser fallback used"
+    elif used_browser_fallback:
+        msg = "ok; browser fallback used"
+    update_source_diagnostic(
+        source["name"],
+        status=final_source_status(source["name"]),
+        raw_count=candidate_count,
+        candidate_count=candidate_count,
+        rejected_count=rejected_count,
+        message=msg,
+        **mode_summary,
+    )
+    return articles
 
 
 def scrape_official_page(source: dict) -> list[dict]:
     """Добавляет важную официальную страницу как отдельный материал, если она свежая и релевантная."""
+    update_source_diagnostic(source["name"], status="running", url=source.get("url", ""))
     try:
         logger.info(f"[{source['name']}] Проверка официальной страницы: {source['url']}")
         resp = SESSION.get(source["url"], timeout=html_timeout_for(source["url"]))
@@ -1413,14 +1800,19 @@ def scrape_official_page(source: dict) -> list[dict]:
         date = parse_date_text(page_text, title, source["url"], source["description"])
 
         if not has_primary_ai_signal(title, page_text):
+            update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="no primary AI signal")
             return []
         if not has_explicit_ai_signal(title, relevance_text):
+            update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="no explicit AI signal")
             return []
-        if not is_ai_relevant(title, relevance_text) and not is_official_ai_law_page(title, relevance_text):
+        if not passes_article_filter(title, relevance_text) and not is_official_ai_law_page(title, relevance_text):
+            update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="official page did not pass legal AI filter")
             return []
         if is_unknown_date(date):
+            update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="date is unknown")
             return []
         if not is_recent_date(date):
+            update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="date is older than monitoring period")
             return []
 
         article = {
@@ -1439,12 +1831,24 @@ def scrape_official_page(source: dict) -> list[dict]:
             "legal_update_type": legal_update_type(title, relevance_text),
             "legal_priority": legal_priority(title, relevance_text),
         }
-        return [attach_analysis(article, title, relevance_text)]
+        result = [attach_analysis(article, title, relevance_text)]
+        update_source_diagnostic(
+            source["name"],
+            status="ok",
+            raw_count=1,
+            candidate_count=1,
+            rejected_count=0,
+            message="ok",
+            **summarize_article_modes(result),
+        )
+        return result
     except Exception as e:
         if isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
             logger.warning(f"[{source['name']}] Страница не ответила за отведенное время, пропуск: {source['url']}")
+            update_source_diagnostic(source["name"], status="timeout", message="request timeout")
         else:
             logger.error(f"[{source['name']}] Ошибка страницы: {e}")
+            update_source_diagnostic(source["name"], status="error", message=str(e)[:220])
         return []
 
 
@@ -1452,8 +1856,16 @@ def scrape_official_page(source: dict) -> list[dict]:
 # ГЛАВНАЯ ФУНКЦИЯ СБОРА ДАННЫХ
 # ─────────────────────────────────────────────
 
-def fetch_all_articles() -> list[dict]:
+def fetch_all_articles(include_diagnostics: bool = False):
     """Собирает статьи из всех источников параллельно."""
+    reset_source_diagnostics()
+    for source in ALL_SOURCES:
+        update_source_diagnostic(
+            source["name"],
+            status="pending",
+            url=source.get("url", ""),
+            message="waiting",
+        )
     all_articles = []
 
     # Параллельный сбор: RSS-ленты + скраперы одновременно
@@ -1486,14 +1898,23 @@ def fetch_all_articles() -> list[dict]:
                 try:
                     result = future.result(timeout=1)
                     all_articles.extend(result)
+                    if final_source_status(name) == "ok":
+                        update_source_diagnostic(
+                            name,
+                            status="ok",
+                            message="ok" if result else "source returned no relevant records",
+                            **summarize_article_modes(result),
+                        )
                     logger.info(f"[{name}] Релевантных: {len(result)}")
                 except Exception as e:
                     logger.error(f"[{name}] Ошибка в потоке: {e}")
+                    update_source_diagnostic(name, status="error", message=str(e)[:220])
         except concurrent.futures.TimeoutError:
             unfinished = [name for future, name in all_futures.items() if not future.done()]
             for future in all_futures:
                 if not future.done():
                     future.cancel()
+                    update_source_diagnostic(all_futures[future], status="timeout", message=f"global timeout {COLLECT_TIMEOUT}s")
             logger.warning(
                 "Сбор остановлен по общему таймауту %s сек. Не дождались источников: %s",
                 COLLECT_TIMEOUT,
@@ -1513,14 +1934,19 @@ def fetch_all_articles() -> list[dict]:
     # Сортировка по реальной дате материала: сначала самые новые и актуальные.
     unique.sort(
         key=lambda article: (
-            int(article.get("legal_priority", 1)),
             to_datetime(article.get("date", "")),
+            int(article.get("legal_priority", 1)),
             int(article.get("relevance_score", 0)),
         ),
         reverse=True,
     )
 
     logger.info(f"Итого уникальных релевантных статей: {len(unique)}")
+    if include_diagnostics:
+        return {
+            "articles": unique,
+            "diagnostics": source_diagnostics_snapshot(),
+        }
     return unique
 
 
@@ -1529,14 +1955,22 @@ def get_stats(articles: list[dict]) -> dict:
     countries = {}
     categories = {}
     sources = {}
+    strict_count = 0
+    monitoring_count = 0
 
     for a in articles:
         countries[a["country"]] = countries.get(a["country"], 0) + 1
         categories[a["category"]] = categories.get(a["category"], 0) + 1
         sources[a["source"]] = sources.get(a["source"], 0) + 1
+        if a.get("strict_match"):
+            strict_count += 1
+        else:
+            monitoring_count += 1
 
     return {
         "total": len(articles),
+        "strict_total": strict_count,
+        "monitoring_total": monitoring_count,
         "countries": dict(sorted(countries.items(), key=lambda x: -x[1])),
         "categories": dict(sorted(categories.items(), key=lambda x: -x[1])),
         "top_sources": dict(

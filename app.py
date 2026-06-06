@@ -5,7 +5,10 @@ import webbrowser
 import hashlib
 import hmac
 import os
+import smtplib
+import time
 from datetime import datetime, timezone
+from email.message import EmailMessage
 from functools import wraps
 from pathlib import Path
 
@@ -21,6 +24,7 @@ from scraper import (
     has_explicit_ai_signal,
     has_primary_ai_signal,
     is_official_ai_law_page,
+    is_monitoring_relevant,
     parse_date_text,
     is_recent_date,
     legal_priority,
@@ -38,8 +42,10 @@ CORS(app)
 
 CACHE_FILE = Path("cache.json")
 USERS_FILE = Path("users.json")
-CACHE_VERSION = 11
+EMAIL_CONFIG_FILE = Path("email_config.json")
+CACHE_VERSION = 12
 CACHE_LOCK = threading.Lock()
+WEEKLY_REFRESH_INTERVAL_SECONDS = 7 * 24 * 60 * 60
 
 USERS: dict[str, str] = {}
 
@@ -49,6 +55,8 @@ _cache: dict = {
     "last_updated": None,
     "sources_count": len(ALL_SOURCES),
     "loading": False,
+    "diagnostics": [],
+    "last_auto_refresh": None,
 }
 
 
@@ -103,17 +111,100 @@ def login_required(view_func):
 USERS.update(load_users())
 
 
-def save_cache(articles: list) -> None:
+def split_articles_by_mode(articles: list[dict], mode: str) -> list[dict]:
+    if mode == "strict":
+        return [a for a in articles if a.get("strict_match")]
+    if mode == "monitoring":
+        return [a for a in articles if not a.get("strict_match")]
+    return articles
+
+
+def article_counts(articles: list[dict]) -> dict:
+    strict_count = sum(1 for a in articles if a.get("strict_match"))
+    monitoring_count = len(articles) - strict_count
+    return {
+        "total": len(articles),
+        "strict_total": strict_count,
+        "monitoring_total": monitoring_count,
+    }
+
+
+def load_email_config() -> dict:
+    if not EMAIL_CONFIG_FILE.exists():
+        return {"enabled": False, "recipients": []}
+    try:
+        config = json.loads(EMAIL_CONFIG_FILE.read_text(encoding="utf-8"))
+        config.setdefault("enabled", False)
+        config.setdefault("recipients", [])
+        return config
+    except Exception as e:
+        logger.error(f"Ошибка загрузки email_config.json: {e}")
+        return {"enabled": False, "recipients": []}
+
+
+def send_email_notification(subject: str, body: str) -> bool:
+    config = load_email_config()
+    recipients = [r for r in config.get("recipients", []) if r]
+    if not config.get("enabled") or not recipients:
+        return False
+
+    host = config.get("smtp_host") or os.environ.get("AI_MONITOR_SMTP_HOST")
+    port = int(config.get("smtp_port") or os.environ.get("AI_MONITOR_SMTP_PORT", "587"))
+    username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
+    password = config.get("smtp_password") or os.environ.get("AI_MONITOR_SMTP_PASSWORD")
+    sender = config.get("from_email") or username
+    use_tls = bool(config.get("use_tls", True))
+    if not host or not sender:
+        logger.warning("Email не отправлен: не указан SMTP host/from_email")
+        return False
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = ", ".join(recipients)
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP(host, port, timeout=20) as smtp:
+            if use_tls:
+                smtp.starttls()
+            if username and password:
+                smtp.login(username, password)
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка отправки email: {e}")
+        return False
+
+
+def notify_about_new_articles(previous_links: set[str], articles: list[dict]) -> None:
+    new_articles = [a for a in articles if a.get("link") and a.get("link") not in previous_links]
+    if not new_articles:
+        return
+    lines = ["Новые материалы по ИИ и правовому регулированию:", ""]
+    for article in new_articles[:25]:
+        mode = "строгий режим" if article.get("strict_match") else "расширенный режим"
+        lines.extend([
+            f"[{mode}] {article.get('title', 'Без заголовка')}",
+            f"{article.get('summary', '')[:260]}",
+            f"URL: {article.get('link', '')}",
+            "",
+        ])
+    send_email_notification("AI Regulation Monitor: новые материалы", "\n".join(lines))
+
+
+def save_cache(articles: list, diagnostics: list | None = None) -> None:
     payload = {
         "cache_version": CACHE_VERSION,
         "articles": articles,
         "stats": get_stats(articles),
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "sources_count": len(ALL_SOURCES),
+        "diagnostics": diagnostics or [],
     }
     with CACHE_LOCK:
         _cache.update(payload)
-        _cache["loading"] = False
+        _cache["loading"] = False 
     try:
         CACHE_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info("Кэш сохранён на диск")
@@ -131,13 +222,18 @@ def load_cache_from_disk() -> bool:
             return False
         articles = []
         for article in data.get("articles", []):
+            cached_nlp_ok = article.get("nlp_label") in {"strict", "monitoring"} or article.get("filter_mode") in {"strict", "monitoring"}
             if not is_allowed_source_url(article.get("link", "")):
                 continue
-            if not has_explicit_ai_signal(article.get("title", ""), article.get("summary", "")):
+            if not cached_nlp_ok and not has_explicit_ai_signal(article.get("title", ""), article.get("summary", "")):
                 continue
-            if article.get("source") == "Federal Register (официальный API)" and not has_primary_ai_signal(article.get("title", ""), article.get("summary", "")):
+            if article.get("source") == "Federal Register (официальный API)" and not cached_nlp_ok and not has_primary_ai_signal(article.get("title", ""), article.get("summary", "")):
                 continue
-            if not is_ai_relevant(article.get("title", ""), article.get("summary", "")) and not is_official_ai_law_page(article.get("title", ""), article.get("summary", "")):
+            if (
+                not cached_nlp_ok
+                and not is_monitoring_relevant(article.get("title", ""), article.get("summary", ""))
+                and not is_official_ai_law_page(article.get("title", ""), article.get("summary", ""))
+            ):
                 continue
             if "прямой поиск" in article.get("source", "") and not article.get("collected_at"):
                 article["collected_at"] = article.get("date")
@@ -152,12 +248,20 @@ def load_cache_from_disk() -> bool:
                 "legal_priority",
                 legal_priority(article.get("title", ""), article.get("summary", "")),
             )
+            article.setdefault(
+                "strict_match",
+                is_ai_relevant(article.get("title", ""), article.get("summary", "")),
+            )
+            article.setdefault("filter_mode", "strict" if article.get("strict_match") else "monitoring")
+            article.setdefault("nlp_label", article.get("filter_mode", "monitoring"))
+            article.setdefault("nlp_confidence", article.get("analysis_confidence", 0))
+            article.setdefault("nlp_reason", "Loaded from cache after relevance validation")
             article.setdefault("analysis_reason", "Материал прошел проверку по связке ИИ + правовой инструмент + правовое действие")
             articles.append(article)
         articles.sort(
             key=lambda a: (
-                int(a.get("legal_priority", 1)),
                 to_datetime(a.get("date", "")),
+                int(a.get("legal_priority", 1)),
                 int(a.get("relevance_score", 0)),
             ),
             reverse=True,
@@ -165,6 +269,7 @@ def load_cache_from_disk() -> bool:
         data["articles"] = articles
         data["stats"] = get_stats(articles)
         data["sources_count"] = len(ALL_SOURCES)
+        data.setdefault("diagnostics", [])
         with CACHE_LOCK:
             _cache.update(data)
             _cache["loading"] = False
@@ -176,13 +281,21 @@ def load_cache_from_disk() -> bool:
 
 
 
-def refresh_articles() -> None:
+def refresh_articles(send_notifications: bool = False, auto_refresh: bool = False) -> None:
     logger.info("▶ Начало обновления данных...")
     with CACHE_LOCK:
         _cache["loading"] = True
+        previous_links = {a.get("link") for a in _cache.get("articles", []) if a.get("link")}
     try:
-        articles = fetch_all_articles()
-        save_cache(articles)
+        result = fetch_all_articles(include_diagnostics=True)
+        articles = result.get("articles", []) if isinstance(result, dict) else result
+        diagnostics = result.get("diagnostics", []) if isinstance(result, dict) else []
+        save_cache(articles, diagnostics)
+        if auto_refresh:
+            with CACHE_LOCK:
+                _cache["last_auto_refresh"] = datetime.now(timezone.utc).isoformat()
+        if send_notifications:
+            notify_about_new_articles(previous_links, articles)
         logger.info(f"✅ Обновление завершено: {len(articles)} статей")
     except Exception as e:
         logger.error(f"Ошибка при обновлении: {e}")
@@ -190,9 +303,29 @@ def refresh_articles() -> None:
             _cache["loading"] = False
 
 
-def background_refresh():
-    t = threading.Thread(target=refresh_articles, daemon=True)
+def background_refresh(send_notifications: bool = False, auto_refresh: bool = False):
+    t = threading.Thread(
+        target=refresh_articles,
+        kwargs={"send_notifications": send_notifications, "auto_refresh": auto_refresh},
+        daemon=True,
+    )
     t.start()
+
+
+def weekly_refresh_loop() -> None:
+    while True:
+        time.sleep(WEEKLY_REFRESH_INTERVAL_SECONDS)
+        with CACHE_LOCK:
+            if _cache.get("loading"):
+                logger.info("Еженедельное обновление пропущено: уже идет сбор")
+                continue
+            _cache["loading"] = True
+        refresh_articles(send_notifications=True, auto_refresh=True)
+
+
+def start_weekly_refresh_thread() -> None:
+    thread = threading.Thread(target=weekly_refresh_loop, daemon=True)
+    thread.start()
 
 
 
@@ -230,11 +363,16 @@ def logout():
 @login_required
 def api_status():
     with CACHE_LOCK:
+        articles = list(_cache.get("articles", []))
+        counts = article_counts(articles)
         return jsonify({
             "loading": _cache.get("loading", False),
             "last_updated": _cache.get("last_updated"),
-            "total": len(_cache.get("articles", [])),
+            "total": counts["total"],
+            "strict_total": counts["strict_total"],
+            "monitoring_total": counts["monitoring_total"],
             "sources_count": _cache.get("sources_count", 0),
+            "last_auto_refresh": _cache.get("last_auto_refresh"),
         })
 
 
@@ -244,11 +382,12 @@ def api_articles():
     country = request.args.get("country", "")
     category = request.args.get("category", "")
     query = request.args.get("q", "").lower().strip()
+    mode = request.args.get("mode", "strict")
     page = max(1, int(request.args.get("page", 1)))
     per_page = min(50, int(request.args.get("per_page", 20)))
 
     with CACHE_LOCK:
-        articles = list(_cache.get("articles", []))
+        articles = split_articles_by_mode(list(_cache.get("articles", [])), mode)
 
     # Фильтрация
     if country:
@@ -279,8 +418,12 @@ def api_articles():
 @app.route("/api/stats")
 @login_required
 def api_stats():
+    mode = request.args.get("mode", "strict")
     with CACHE_LOCK:
-        stats = dict(_cache.get("stats", {}))
+        all_articles = list(_cache.get("articles", []))
+        counts = article_counts(all_articles)
+        articles = split_articles_by_mode(all_articles, mode)
+        stats = get_stats(articles)
         countries = dict(stats.get("countries", {}))
         categories = dict(stats.get("categories", {}))
         for source in ALL_SOURCES:
@@ -290,9 +433,36 @@ def api_stats():
         stats["categories"] = dict(sorted(categories.items(), key=lambda x: (-x[1], x[0])))
         return jsonify({
             "stats": stats,
+            "total_all": counts["total"],
+            "strict_total": counts["strict_total"],
+            "monitoring_total": counts["monitoring_total"],
             "last_updated": _cache.get("last_updated"),
             "loading": _cache.get("loading", False),
         })
+
+
+@app.route("/api/diagnostics")
+@login_required
+def api_diagnostics():
+    with CACHE_LOCK:
+        diagnostics = list(_cache.get("diagnostics", []))
+    if not diagnostics:
+        diagnostics = [
+            {
+                "name": s["name"],
+                "status": "pending",
+                "raw_count": 0,
+                "candidate_count": 0,
+                "accepted_count": 0,
+                "strict_count": 0,
+                "monitoring_count": 0,
+                "message": "Диагностика появится после обновления данных",
+                "url": s.get("url", ""),
+            }
+            for s in ALL_SOURCES
+        ]
+    diagnostics.sort(key=lambda item: (item.get("status") == "ok", -int(item.get("accepted_count", 0)), item.get("name", "")))
+    return jsonify({"diagnostics": diagnostics})
 
 
 @app.route("/api/sources")
@@ -343,5 +513,6 @@ if __name__ == "__main__":
     if not has_cache:
         logger.info("Кэш не найден. Автоматический сбор отключен — нажмите «Обновить данные» в интерфейсе.")
 
+    start_weekly_refresh_thread()
     threading.Timer(1.5, lambda: webbrowser.open_new_tab("http://127.0.0.1:5000")).start()    
     app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

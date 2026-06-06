@@ -1,21 +1,368 @@
 {
-  "cache_version": 11,
+  "cache_version": 12,
   "articles": [
     {
-      "id": "https_www_digital_go_jp_en_policies_gennai",
-      "title": "Government AI “GENAI”",
-      "summary": "May 29, 2026 (The image shows the GENAI environment: utilizing generative AI to make government operations more efficient.) Government AI serves as the foundation that enables government employees to utilize AI in a safe and secure manner. As an initial measure, the Digital Agency is rolling out \"GENAI (Derived from Generative AI. Pronounced GENNAI),\" an environment for utilizing generative AI, to all ministries and agencies. Based on the \"Act on the Promotion of Research and Development, and Ut",
-      "link": "https://www.digital.go.jp/en/policies/gennai",
-      "date": "2026-05-29T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:01:12.851839+00:00",
-      "source": "Japan Government AI GENAI",
+      "id": "https_www_federalregister_gov_documents_2026_02_12_2026_02854_final_priority_and",
+      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Meaningful Learning Opportunities",
+      "summary": "The Department of Education (Department) announces a final priority and definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice, and ",
+      "link": "https://www.federalregister.gov/documents/2026/02/12/2026-02854/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-meaningful",
+      "date": "2026-12-02T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.259363+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 65,
+      "legal_update_type": "Публикация акта",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "future",
+      "nlp_label": "strict",
+      "nlp_confidence": 90,
+      "nlp_reason": "AI topic in text; legal instrument in text; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action",
+      "analysis_confidence": 65,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием",
+      "matched_ai_terms": [
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "notice"
+      ],
+      "matched_legal_actions": [
+        "final",
+        "proposed",
+        "published"
+      ],
+      "matched_intent_terms": [
+        "may"
+      ],
+      "matched_legal_actors": [
+        "department"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_04_10_2026_06952_american_ai_export",
+      "title": "American AI Exports Program; Call for Proposals for Pre-Set Consortia",
+      "summary": "The Department of Commerce (the Department), through the International Trade Administration (ITA), invites proposals for full- stack American AI export packages from industry-led `pre-set' consortia for designation under the American Artificial Intelligence (AI) Exports Program (the Program) established pursuant to Executive Order 14320, \"Promoting the Export of the American AI Technology Stack.\" A designated package will be presented by U.S. Government representatives as a standing, full-stack ",
+      "link": "https://www.federalregister.gov/documents/2026/04/10/2026-06952/american-ai-exports-program-call-for-proposals-for-pre-set-consortia",
+      "date": "2026-10-04T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.180214+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 70,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "future",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 90,
+      "nlp_reason": "AI topic in title; legal instrument in text; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 70,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "executive order",
+        "law",
+        "notice"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "government",
+        "may",
+        "review"
+      ],
+      "matched_legal_actors": [
+        "department",
+        "government"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_04_09_2026_06807_advisory_committee",
+      "title": "Advisory Committee on the Medical Uses of Isotopes: Meeting Notice",
+      "summary": "The U.S. Nuclear Regulatory Commission (NRC) will convene a meeting of the Advisory Committee on the Medical Uses of Isotopes (ACMUI) on April 20-21, 2026. A sample of agenda items to be discussed include: a review of recent medical events; recommendations and advice to support the NRC implementation of the ADVANCE Act; recommendations on the staff's memo for licensing the use of alpha nuclides in radiopharmaceutical therapy; recommendations on the potential applications of artificial intelligen",
+      "link": "https://www.federalregister.gov/documents/2026/04/09/2026-06807/advisory-committee-on-the-medical-uses-of-isotopes-meeting-notice",
+      "date": "2026-09-04T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.215019+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 75,
+      "legal_update_type": "Стандарт / руководство",
+      "legal_priority": 2,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "future",
+      "nlp_label": "strict",
+      "nlp_confidence": 98,
+      "nlp_reason": "AI topic in text; legal term in title; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 75,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "guidance",
+        "notice",
+        "rulemaking"
+      ],
+      "matched_legal_actions": [
+        "proposed"
+      ],
+      "matched_intent_terms": [
+        "commission",
+        "committee",
+        "recommendations",
+        "review"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "committee"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_01_08_2026_00206_request_for_inform",
+      "title": "Request for Information Regarding Security Considerations for Artificial Intelligence Agents",
+      "summary": "The Center for AI Standards and Innovation (CAISI), housed within the National Institute of Standards and Technology (NIST) at the Department of Commerce, is seeking information and insights from stakeholders on practices and methodologies for measuring and improving the secure development and deployment of artificial intelligence (AI) agent systems. AI agent systems are capable of taking autonomous actions that impact real-world systems or environments, and may be susceptible to hijacking, back",
+      "link": "https://www.federalregister.gov/documents/2026/01/08/2026-00206/request-for-information-regarding-security-considerations-for-artificial-intelligence-agents",
+      "date": "2026-08-01T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:33.006340+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 60,
+      "legal_update_type": "Стандарт / руководство",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "future",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 76,
+      "nlp_reason": "AI topic in title; legal instrument in text; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 60,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "ai systems",
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "guidelines",
+        "notice",
+        "standards"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "may",
+        "recommendations"
+      ],
+      "matched_legal_actors": [
+        "department"
+      ]
+    },
+    {
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026PC0502_qid_1_rid_2",
+      "title": "Proposal for a REGULATION OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL establishing a framework of measures for strengthening Europe’s cloud and AI ecosystem (Cloud and AI Development Act)",
+      "summary": "Результат EUR-Lex по запросу: \"AI Act\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026PC0502&qid=1&rid=2",
+      "date": "2026-06-03T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:28.000446+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
+      "relevance_score": 70,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 3,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 94,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 70,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "framework",
+        "proposal",
+        "regulation"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "parliament"
+      ],
+      "matched_legal_actors": [
+        "council",
+        "parliament"
+      ]
+    },
+    {
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026SC0502_qid_1_rid_3",
+      "title": "COMMISSION STAFF WORKING DOCUMENT IMPACT ASSESSMENT REPORT Accompanying the document Proposal for a REGULATION OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL establishing a framework of measures for strengthening Europe’s cloud and AI ecosystem (Cloud and AI Development Act)",
+      "summary": "Результат EUR-Lex по запросу: \"AI Act\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026SC0502&qid=1&rid=3",
+      "date": "2026-06-03T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:28.010869+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
+      "relevance_score": 70,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 3,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 94,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 70,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "framework",
+        "proposal",
+        "regulation"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "parliament"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "council",
+        "parliament"
+      ]
+    },
+    {
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026PC0502_qid_1_rid_6",
+      "title": "Proposal for a REGULATION OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL establishing a framework of measures for strengthening Europe’s cloud and AI ecosystem (Cloud and AI Development Act)",
+      "summary": "Результат EUR-Lex по запросу: \"general-purpose AI\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026PC0502&qid=1&rid=6",
+      "date": "2026-06-03T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:34.800885+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
+      "relevance_score": 70,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 3,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 94,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 70,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "framework",
+        "proposal",
+        "regulation"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "parliament"
+      ],
+      "matched_legal_actors": [
+        "council",
+        "parliament"
+      ]
+    },
+    {
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026SC0502_qid_1_rid_8",
+      "title": "COMMISSION STAFF WORKING DOCUMENT IMPACT ASSESSMENT REPORT Accompanying the document Proposal for a REGULATION OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL establishing a framework of measures for strengthening Europe’s cloud and AI ecosystem (Cloud and AI Development Act)",
+      "summary": "Результат EUR-Lex по запросу: \"general-purpose AI\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026SC0502&qid=1&rid=8",
+      "date": "2026-06-03T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:34.830371+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
+      "relevance_score": 70,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 3,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 94,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 70,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "framework",
+        "proposal",
+        "regulation"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "parliament"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "council",
+        "parliament"
+      ]
+    },
+    {
+      "id": "https_www8_cao_go_jp_cstp_ai_ai_act_ai_act_html",
+      "title": "Japan AI Act: Act on Promotion of Research and Development, and Utilization of AI-related Technology",
+      "summary": "Official Cabinet Office page on Japan's AI Act. The page contains the overview of the Act on Promotion of Research and Development, and Utilization of AI-related Technology, links to the legal text, parliamentary supplementary resolutions, and the English provisional overview of the AI Act. The Act was promulgated and partially enforced on June 4, 2025, with full enforcement scheduled for September 1, 2025.",
+      "link": "https://www8.cao.go.jp/cstp/ai/ai_act/ai_act.html",
+      "date": "2025-06-04T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:48.880984+00:00",
+      "source": "Japan Cabinet Office AI Act",
       "country": "Japan",
       "flag": "🇯🇵",
       "category": "Госуправление",
-      "source_description": "Government AI GENAI policy and releases",
+      "source_description": "Cabinet Office Japan: AI Act materials, legal text and official AI policy documents",
       "relevance_score": 100,
       "legal_update_type": "Принятие акта",
       "legal_priority": 4,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in title; legal instrument in text; strong AI-law phrase; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
       "analysis_confidence": 100,
       "analysis_reason": "ИИ явно указан в заголовке; найдена сильная правовая AI-фраза; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -32,210 +379,21 @@
       "matched_legal_actions": [
         "approved",
         "enacted"
-      ]
-    },
-    {
-      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026DC0234_qid_1_rid_3",
-      "title": "REPORT FROM THE COMMISSION TO THE EUROPEAN PARLIAMENT AND THE COUNCIL REPORT ADOPTED PURSUANT TO ARTICLE 112(1) OF REGULATION (EU) 2024/1689 ON THE NEED TO REVIEW THE LIST OF PROHIBITED AI PRACTICES AND OF HIGH-RISK AI SYSTEMS LISTED IN ANNEX III",
-      "summary": "Результат EUR-Lex по запросу: \"AI Act\"",
-      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026DC0234&qid=1&rid=3",
-      "date": "2026-05-20T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:37.480993+00:00",
-      "source": "EUR-Lex (прямой поиск)",
-      "country": "EU",
-      "flag": "🇪🇺",
-      "category": "Законодательство",
-      "source_description": "Официальный реестр законодательства ЕС",
-      "relevance_score": 95,
-      "legal_update_type": "Принятие акта",
-      "legal_priority": 4,
-      "analysis_confidence": 95,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "ai systems",
-        "high-risk ai"
       ],
-      "matched_legal_instruments": [
-        "regulation"
+      "matched_intent_terms": [
+        "agency",
+        "expected",
+        "government",
+        "may",
+        "ministry",
+        "plan",
+        "strategy",
+        "study"
       ],
-      "matched_legal_actions": [
-        "adopted"
-      ]
-    },
-    {
-      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026DC0234_qid_1_rid_6",
-      "title": "REPORT FROM THE COMMISSION TO THE EUROPEAN PARLIAMENT AND THE COUNCIL REPORT ADOPTED PURSUANT TO ARTICLE 112(1) OF REGULATION (EU) 2024/1689 ON THE NEED TO REVIEW THE LIST OF PROHIBITED AI PRACTICES AND OF HIGH-RISK AI SYSTEMS LISTED IN ANNEX III",
-      "summary": "Результат EUR-Lex по запросу: \"high-risk AI\"",
-      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026DC0234&qid=1&rid=6",
-      "date": "2026-05-20T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:40.858914+00:00",
-      "source": "EUR-Lex (прямой поиск)",
-      "country": "EU",
-      "flag": "🇪🇺",
-      "category": "Законодательство",
-      "source_description": "Официальный реестр законодательства ЕС",
-      "relevance_score": 95,
-      "legal_update_type": "Принятие акта",
-      "legal_priority": 4,
-      "analysis_confidence": 95,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "ai systems",
-        "high-risk ai"
-      ],
-      "matched_legal_instruments": [
-        "regulation"
-      ],
-      "matched_legal_actions": [
-        "adopted"
-      ]
-    },
-    {
-      "id": "https_www_nist_gov_news_events_news_2026_02_announcing_ai_agent_standards_initia",
-      "title": "Announcing the \"AI Agent Standards Initiative\" for Interoperable and Secure Innovation",
-      "summary": "The Initiative will ensure that the next generation of AI is widely adopted with confidence, can function securely on behalf of its users, and can interoperate smoothly across the digital ecosystem.",
-      "link": "https://www.nist.gov/news-events/news/2026/02/announcing-ai-agent-standards-initiative-interoperable-and-secure",
-      "date": "2026-02-17T12:00:00+00:00",
-      "collected_at": "2026-06-02T16:59:48.527027+00:00",
-      "source": "NIST News",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Стандарты",
-      "source_description": "Национальный институт стандартов и технологий",
-      "relevance_score": 95,
-      "legal_update_type": "Принятие акта",
-      "legal_priority": 4,
-      "analysis_confidence": 95,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "standards"
-      ],
-      "matched_legal_actions": [
-        "adopted"
-      ]
-    },
-    {
-      "id": "https_www_korea_net_NewsFocus_policies_view_articleId_286183",
-      "title": "AI Basic Act takes effect as world's first set of laws for AI : Korea.net : The official website of the Republic of Korea",
-      "summary": "Policies Jan 22, 2026 An artificial intelligence drawing robot on Oct. 29, 2025, creates the portrait of a visitor at K-Business Square of the APEC Economic Exhibition Hall in Gyeongju, Gyeongsangbuk-do Province. (Park Dae Jin) By Margareth Theresia The Basic Act on the Development of Artificial Intelligence (AI) and Creation of a Foundation for Trust (AI Basic Act) took effect on Jan. 22. This is the world's first comprehensive legislation governing AI that covers everything about the sector, n",
-      "link": "https://www.korea.net/NewsFocus/policies/view?articleId=286183",
-      "date": "2026-01-22T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:01:13.373844+00:00",
-      "source": "South Korea AI Basic Act",
-      "country": "South Korea",
-      "flag": "🇰🇷",
-      "category": "Законодательство",
-      "source_description": "Official Korea.net policy news on AI Basic Act",
-      "relevance_score": 95,
-      "legal_update_type": "Вступление в силу",
-      "legal_priority": 4,
-      "analysis_confidence": 95,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "artificial intelligence",
-        "generative ai"
-      ],
-      "matched_legal_instruments": [
-        "act",
-        "law",
-        "ordinance",
-        "standards"
-      ],
-      "matched_legal_actions": [
-        "takes effect"
-      ]
-    },
-    {
-      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52025PC0836_qid_1_rid_6",
-      "title": "Proposal for a REGULATION OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL amending Regulations (EU) 2024/1689 and (EU) 2018/1139 as regards the simplification of the implementation of harmonised rules on artificial intelligence (Digital Omnibus on AI)",
-      "summary": "Результат EUR-Lex по запросу: \"general-purpose AI\"",
-      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52025PC0836&qid=1&rid=6",
-      "date": "2025-11-19T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:43.649168+00:00",
-      "source": "EUR-Lex (прямой поиск)",
-      "country": "EU",
-      "flag": "🇪🇺",
-      "category": "Законодательство",
-      "source_description": "Официальный реестр законодательства ЕС",
-      "relevance_score": 70,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 3,
-      "analysis_confidence": 70,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "proposal",
-        "regulation"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2025_09_25_2025_18640_proposed_priority_",
-      "title": "Proposed Priority and Definitions-Secretary's Supplemental Priority and Definitions on Meaningful Learning Opportunities",
-      "summary": "The Secretary proposes one additional priority and related definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice, and Returning Edu",
-      "link": "https://www.federalregister.gov/documents/2025/09/25/2025-18640/proposed-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-meaningful",
-      "date": "2025-09-25T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:56.973583+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 65,
-      "legal_update_type": "Публикация акта",
-      "legal_priority": 3,
-      "analysis_confidence": 65,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "proposed rule"
-      ],
-      "matched_legal_actions": [
-        "final",
-        "proposed",
-        "published"
-      ]
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_04_09_2026_06807_advisory_committee",
-      "title": "Advisory Committee on the Medical Uses of Isotopes: Meeting Notice",
-      "summary": "The U.S. Nuclear Regulatory Commission (NRC) will convene a meeting of the Advisory Committee on the Medical Uses of Isotopes (ACMUI) on April 20-21, 2026. A sample of agenda items to be discussed include: a review of recent medical events; recommendations and advice to support the NRC implementation of the ADVANCE Act; recommendations on the staff's memo for licensing the use of alpha nuclides in radiopharmaceutical therapy; recommendations on the potential applications of artificial intelligen",
-      "link": "https://www.federalregister.gov/documents/2026/04/09/2026-06807/advisory-committee-on-the-medical-uses-of-isotopes-meeting-notice",
-      "date": "2026-09-04T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.369566+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 75,
-      "legal_update_type": "Стандарт / руководство",
-      "legal_priority": 2,
-      "analysis_confidence": 75,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "act",
-        "guidance",
-        "notice",
-        "rulemaking"
-      ],
-      "matched_legal_actions": [
-        "proposed"
+      "matched_legal_actors": [
+        "agency",
+        "government",
+        "ministry"
       ]
     },
     {
@@ -244,7 +402,7 @@
       "summary": "The National Institute of Standards and Technology (NIST), an agency of the United States Department of Commerce, previously announced the formation of the Artificial Intelligence Safety Institute Consortium (\"AISIC\") through a publication dated November 2, 2023 (88 FR 75276). AISIC brought together more than 280 organizations to develop science-based and empirically backed guidelines and standards for artificial intelligence (AI) measurement, laying a foundation for global AI metrology. Through",
       "link": "https://www.federalregister.gov/documents/2026/05/29/2026-10779/nist-artificial-intelligence-consortium",
       "date": "2026-05-29T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:45.600224+00:00",
+      "collected_at": "2026-06-06T21:40:21.508269+00:00",
       "source": "Federal Register (официальный API)",
       "country": "USA",
       "flag": "🇺🇸",
@@ -253,6 +411,12 @@
       "relevance_score": 95,
       "legal_update_type": "Публикация акта",
       "legal_priority": 2,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in title; legal instrument in text; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
       "analysis_confidence": 95,
       "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -270,6 +434,311 @@
       "matched_legal_actions": [
         "announced",
         "issued"
+      ],
+      "matched_intent_terms": [
+        "agency",
+        "government",
+        "may",
+        "plan"
+      ],
+      "matched_legal_actors": [
+        "agency",
+        "department",
+        "government"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_05_28_2026_10602_ai_enabled_optimiz",
+      "title": "AI-Enabled Optimization of Early-Phase Clinical Trials Pilot Program; Request for Information; Extension of Comment Period",
+      "summary": "The Food and Drug Administration (FDA or the Agency) is extending the comment period for the notice entitled \"AI-Enabled Optimization of Early-Phase Clinical Trials Pilot Program; Request for Information\" that appeared in the Federal Register of April 29, 2026. In the notice, FDA requested comments to solicit input on a proposed pilot program to assess how artificial intelligence (AI)-enabled technologies can improve efficiency, speed, and quality of decision- making in early phase clinical tria",
+      "link": "https://www.federalregister.gov/documents/2026/05/28/2026-10602/ai-enabled-optimization-of-early-phase-clinical-trials-pilot-program-request-for-information",
+      "date": "2026-05-28T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:21.555488+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 85,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 98,
+      "nlp_reason": "AI topic in title; legal instrument in text; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 85,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "notice"
+      ],
+      "matched_legal_actions": [
+        "proposed"
+      ],
+      "matched_intent_terms": [
+        "agency"
+      ],
+      "matched_legal_actors": [
+        "agency"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_05_27_2026_10524_notice_of_open_pub",
+      "title": "Notice of Open Public Event",
+      "summary": "Notice is hereby given of the following event of the U.S.- China Economic and Security Review Commission. The Commission is mandated by Congress to investigate, assess, and report to Congress annually on \"the national security implications of the economic relationship between the United States and the People's Republic of China.\" Pursuant to this mandate, the Commission will hold a public event in Washington, DC on June 4, 2026 on \"Silicon to Sovereignty: China's Bid to Control the AI Stack from",
+      "link": "https://www.federalregister.gov/documents/2026/05/27/2026-10524/notice-of-open-public-event",
+      "date": "2026-05-27T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:22.448354+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 50,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 72,
+      "nlp_reason": "AI topic in text; legal term in title; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 50,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "notice"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "review"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "congress"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_05_22_2026_10347_final_priority_and",
+      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Promoting Patriotic Education",
+      "summary": "The Department of Education (Department) announces a final priority and definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. The final priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice,",
+      "link": "https://www.federalregister.gov/documents/2026/05/22/2026-10347/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-promoting",
+      "date": "2026-05-22T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.067472+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 85,
+      "legal_update_type": "Публикация акта",
+      "legal_priority": 1,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 90,
+      "nlp_reason": "AI topic in text; legal instrument in text; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action",
+      "analysis_confidence": 85,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "notice"
+      ],
+      "matched_legal_actions": [
+        "final",
+        "published"
+      ],
+      "matched_intent_terms": [
+        "may"
+      ],
+      "matched_legal_actors": [
+        "department"
+      ]
+    },
+    {
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026DC0234_qid_1_rid_5",
+      "title": "REPORT FROM THE COMMISSION TO THE EUROPEAN PARLIAMENT AND THE COUNCIL REPORT ADOPTED PURSUANT TO ARTICLE 112(1) OF REGULATION (EU) 2024/1689 ON THE NEED TO REVIEW THE LIST OF PROHIBITED AI PRACTICES AND OF HIGH-RISK AI SYSTEMS LISTED IN ANNEX III",
+      "summary": "Результат EUR-Lex по запросу: \"AI Act\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026DC0234&qid=1&rid=5",
+      "date": "2026-05-20T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:28.031404+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
+      "relevance_score": 95,
+      "legal_update_type": "Принятие акта",
+      "legal_priority": 4,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 95,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "ai systems",
+        "high-risk ai"
+      ],
+      "matched_legal_instruments": [
+        "regulation"
+      ],
+      "matched_legal_actions": [
+        "adopted"
+      ],
+      "matched_intent_terms": [
+        "commission",
+        "parliament",
+        "review"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "council",
+        "parliament"
+      ]
+    },
+    {
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52026DC0234_qid_1_rid_6",
+      "title": "REPORT FROM THE COMMISSION TO THE EUROPEAN PARLIAMENT AND THE COUNCIL REPORT ADOPTED PURSUANT TO ARTICLE 112(1) OF REGULATION (EU) 2024/1689 ON THE NEED TO REVIEW THE LIST OF PROHIBITED AI PRACTICES AND OF HIGH-RISK AI SYSTEMS LISTED IN ANNEX III",
+      "summary": "Результат EUR-Lex по запросу: \"high-risk AI\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52026DC0234&qid=1&rid=6",
+      "date": "2026-05-20T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:31.273870+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
+      "relevance_score": 95,
+      "legal_update_type": "Принятие акта",
+      "legal_priority": 4,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 95,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "ai systems",
+        "high-risk ai"
+      ],
+      "matched_legal_instruments": [
+        "regulation"
+      ],
+      "matched_legal_actions": [
+        "adopted"
+      ],
+      "matched_intent_terms": [
+        "commission",
+        "parliament",
+        "review"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "council",
+        "parliament"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_06_05_2026_11353_reforming_the_high",
+      "title": "Reforming the High-Cost Program for an All-IP Future, Connect America Fund: A National Broadband Plan for Our Future High-Cost Universal Support",
+      "summary": "In this document, the Federal Communications Commission (FCC or Commission) adopted a Notice of Proposed Rulemaking (NPRM) that kicks off a process to examine how the Commission can make some of its high-cost mechanisms even more efficient and effective into the future. Ensuring a predictable High-Cost Program for years to come--call it High-Cost Modernization--will provide continuing support for our Build America Agenda, supercharge American leadership in Artificial Intelligence (AI) by efficie",
+      "link": "https://www.federalregister.gov/documents/2026/06/05/2026-11353/reforming-the-high-cost-program-for-an-all-ip-future-connect-america-fund-a-national-broadband-plan",
+      "date": "2026-05-06T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.039246+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 85,
+      "legal_update_type": "Принятие акта",
+      "legal_priority": 4,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in text; legal instrument in text; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 85,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "notice",
+        "proposed rule",
+        "rulemaking"
+      ],
+      "matched_legal_actions": [
+        "adopted",
+        "proposed"
+      ],
+      "matched_intent_terms": [
+        "commission",
+        "plan"
+      ],
+      "matched_legal_actors": [
+        "commission"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_02_05_2026_02301_notice_of_public_m",
+      "title": "Notice of Public Meetings of the Maryland Advisory Committee to the U.S. Commission on Civil Rights",
+      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Maryland Advisory Committee (Committee) to the Commission will hold public meetings via Zoom. The purpose is for the committee to begin the proposal discussion on the chosen topic of artificial intelligence and its application in voting administration.",
+      "link": "https://www.federalregister.gov/documents/2026/02/05/2026-02301/notice-of-public-meetings-of-the-maryland-advisory-committee-to-the-us-commission-on-civil-rights",
+      "date": "2026-05-02T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.285756+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 60,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 86,
+      "nlp_reason": "AI topic in text; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 60,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "notice",
+        "proposal"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "committee"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "committee"
       ]
     },
     {
@@ -278,7 +747,7 @@
       "summary": "The Food and Drug Administration (FDA or the Agency) is issuing this request for information to solicit input on a proposed pilot program to assess how artificial intelligence (AI)-enabled technologies can improve efficiency, speed, and quality of decision- making in early phase clinical trials. Early-phase clinical trials represent a critical bottleneck in drug development, often characterized by high uncertainty, limited patient populations, and inefficient decision- making processes. This pil",
       "link": "https://www.federalregister.gov/documents/2026/04/29/2026-08281/ai-enabled-optimization-of-early-phase-clinical-trials-pilot-program-request-for-information",
       "date": "2026-04-29T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:45.641432+00:00",
+      "collected_at": "2026-06-06T21:40:21.589813+00:00",
       "source": "Federal Register (официальный API)",
       "country": "USA",
       "flag": "🇺🇸",
@@ -287,6 +756,12 @@
       "relevance_score": 100,
       "legal_update_type": "Стандарт / руководство",
       "legal_priority": 2,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in title; legal instrument in text; strong AI-law phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
       "analysis_confidence": 100,
       "analysis_reason": "ИИ явно указан в заголовке; найдена сильная правовая AI-фраза; найден правовой инструмент; найдено правовое действие или стадия; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -301,6 +776,218 @@
       ],
       "matched_legal_actions": [
         "proposed"
+      ],
+      "matched_intent_terms": [
+        "agency",
+        "may",
+        "study"
+      ],
+      "matched_legal_actors": [
+        "agency"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_04_22_2026_07809_notice_of_public_m",
+      "title": "Notice of Public Meetings of the Maryland Advisory Committee to the U.S. Commission on Civil Rights",
+      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Maryland Advisory Committee (Committee) to the Commission will hold public meetings via Zoom. The purpose is for the committee to begin briefing planning on the chosen topic of artificial intelligence and its application in voting administration.",
+      "link": "https://www.federalregister.gov/documents/2026/04/22/2026-07809/notice-of-public-meetings-of-the-maryland-advisory-committee-to-the-us-commission-on-civil-rights",
+      "date": "2026-04-22T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.106901+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 60,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 86,
+      "nlp_reason": "AI topic in text; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 60,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "notice"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "committee"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "committee"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_04_13_2026_07087_final_priority_and",
+      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Advancing Artificial Intelligence in Education",
+      "summary": "The Department of Education (Department) announces one priority and related definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use an entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence- Based Literacy, Educational Choice, ",
+      "link": "https://www.federalregister.gov/documents/2026/04/13/2026-07087/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-advancing",
+      "date": "2026-04-13T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.129607+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 60,
+      "legal_update_type": "Публикация акта",
+      "legal_priority": 1,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 82,
+      "nlp_reason": "AI topic in title; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal action; AI close to policy intent",
+      "analysis_confidence": 60,
+      "analysis_reason": "ИИ явно указан в заголовке; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием; отклонено: нет правового инструмента",
+      "matched_ai_terms": [
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [],
+      "matched_legal_actions": [
+        "final",
+        "proposed",
+        "published"
+      ],
+      "matched_intent_terms": [
+        "may"
+      ],
+      "matched_legal_actors": [
+        "department"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2026_04_03_2026_06542_notice_of_public_m",
+      "title": "Notice of Public Meetings of the Illinois Advisory Committee to the U.S. Commission on Civil Rights",
+      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Illinois Advisory Committee (Committee) to the U.S. Commission on Civil Rights will hold a public business meeting the third Tuesday of the month (April 2026 through December 2026) via Zoom at 3:30 p.m. CT. The purpose of these meetings is to discuss the Committee's project focused on the use of AI in law enforcement.",
+      "link": "https://www.federalregister.gov/documents/2026/04/03/2026-06542/notice-of-public-meetings-of-the-illinois-advisory-committee-to-the-us-commission-on-civil-rights",
+      "date": "2026-03-04T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:22.483212+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 60,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 86,
+      "nlp_reason": "AI topic in text; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 60,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "law",
+        "notice"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "committee"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "committee"
+      ]
+    },
+    {
+      "id": "https_www_nist_gov_news_events_news_2026_02_announcing_ai_agent_standards_initia",
+      "title": "Announcing the \"AI Agent Standards Initiative\" for Interoperable and Secure Innovation",
+      "summary": "The Initiative will ensure that the next generation of AI is widely adopted with confidence, can function securely on behalf of its users, and can interoperate smoothly across the digital ecosystem.",
+      "link": "https://www.nist.gov/news-events/news/2026/02/announcing-ai-agent-standards-initiative-interoperable-and-secure",
+      "date": "2026-02-17T12:00:00+00:00",
+      "collected_at": "2026-06-06T21:39:32.582231+00:00",
+      "source": "NIST News",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Стандарты",
+      "source_description": "Национальный институт стандартов и технологий",
+      "relevance_score": 95,
+      "legal_update_type": "Принятие акта",
+      "legal_priority": 4,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 84,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; legal action or procedural stage; AI close to legal instrument; AI close to legal action",
+      "analysis_confidence": 95,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai"
+      ],
+      "matched_legal_instruments": [
+        "standards"
+      ],
+      "matched_legal_actions": [
+        "adopted"
+      ],
+      "matched_intent_terms": [],
+      "matched_legal_actors": []
+    },
+    {
+      "id": "https_www_korea_net_NewsFocus_policies_view_articleId_286183",
+      "title": "AI Basic Act takes effect as world's first set of laws for AI : Korea.net : The official website of the Republic of Korea",
+      "summary": "Policies Jan 22, 2026 An artificial intelligence drawing robot on Oct. 29, 2025, creates the portrait of a visitor at K-Business Square of the APEC Economic Exhibition Hall in Gyeongju, Gyeongsangbuk-do Province. (Park Dae Jin) By Margareth Theresia The Basic Act on the Development of Artificial Intelligence (AI) and Creation of a Foundation for Trust (AI Basic Act) took effect on Jan. 22. This is the world's first comprehensive legislation governing AI that covers everything about the sector, n",
+      "link": "https://www.korea.net/NewsFocus/policies/view?articleId=286183",
+      "date": "2026-01-22T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:49.712678+00:00",
+      "source": "South Korea AI Basic Act",
+      "country": "South Korea",
+      "flag": "🇰🇷",
+      "category": "Законодательство",
+      "source_description": "Official Korea.net policy news on AI Basic Act",
+      "relevance_score": 95,
+      "legal_update_type": "Вступление в силу",
+      "legal_priority": 4,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 100,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; legal action or procedural stage; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to legal action; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 95,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "artificial intelligence",
+        "generative ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "law",
+        "ordinance",
+        "standards"
+      ],
+      "matched_legal_actions": [
+        "takes effect"
+      ],
+      "matched_intent_terms": [
+        "committee",
+        "government",
+        "ministry",
+        "strategy"
+      ],
+      "matched_legal_actors": [
+        "committee",
+        "government",
+        "ministry"
       ]
     },
     {
@@ -309,7 +996,7 @@
       "summary": "The Center for AI Standards and Innovation (CAISI) at the U.S. Department of Commerce’s National Institute of Standards and Technology (NIST) has published a Request for Information (RFI) seeking insights from industry, academia, and the security",
       "link": "https://www.nist.gov/news-events/news/2026/01/caisi-issues-request-information-about-securing-ai-agent-systems",
       "date": "2026-01-12T12:00:00+00:00",
-      "collected_at": "2026-06-02T16:59:48.533472+00:00",
+      "collected_at": "2026-06-06T21:39:32.595798+00:00",
       "source": "NIST News",
       "country": "USA",
       "flag": "🇺🇸",
@@ -318,6 +1005,12 @@
       "relevance_score": 95,
       "legal_update_type": "Публикация акта",
       "legal_priority": 2,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 88,
+      "nlp_reason": "AI topic in title; legal instrument in text; formal legal update phrase; legal action or procedural stage; public/legal actor; AI close to legal instrument; AI close to legal action",
       "analysis_confidence": 95,
       "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -329,6 +1022,88 @@
       ],
       "matched_legal_actions": [
         "published"
+      ],
+      "matched_intent_terms": [],
+      "matched_legal_actors": [
+        "department"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2025_12_23_2025_23641_request_for_inform",
+      "title": "Request for Information: Accelerating the Adoption and Use of Artificial Intelligence as Part of Clinical Care",
+      "summary": "The HHS Office of the Deputy Secretary in collaboration with ASTP/ONC has published this Request for Information (RFI) to seek broad public comment on what HHS can do to accelerate the adoption and use of AI as part of clinical care.",
+      "link": "https://www.federalregister.gov/documents/2025/12/23/2025-23641/request-for-information-accelerating-the-adoption-and-use-of-artificial-intelligence-as-part-of",
+      "date": "2025-12-23T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:20.309780+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 95,
+      "legal_update_type": "Публикация акта",
+      "legal_priority": 1,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 80,
+      "nlp_reason": "AI topic in title; legal instrument in text; formal legal update phrase; legal action or procedural stage; AI close to legal instrument; AI close to legal action",
+      "analysis_confidence": 95,
+      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "notice",
+        "rfi"
+      ],
+      "matched_legal_actions": [
+        "published"
+      ],
+      "matched_intent_terms": [],
+      "matched_legal_actors": []
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2025_12_19_2025_23399_notice_of_public_m",
+      "title": "Notice of Public Meetings of the Illinois Advisory Committee to the U.S. Commission on Civil Rights",
+      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Illinois Advisory Committee (Committee) to the U.S. Commission on Civil Rights will hold a public business meeting the last Wednesday of the month (January 2026 through March 2026) via Zoom at 3:30 p.m. CT. The purpose of these meetings is to discuss the Committee's project, Civil Rights, Civil Liberties, and Generati",
+      "link": "https://www.federalregister.gov/documents/2025/12/19/2025-23399/notice-of-public-meetings-of-the-illinois-advisory-committee-to-the-us-commission-on-civil-rights",
+      "date": "2025-12-19T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:23.405552+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 60,
+      "legal_update_type": "Правовое событие",
+      "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 86,
+      "nlp_reason": "AI topic in text; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
+      "analysis_confidence": 60,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
+      "matched_ai_terms": [
+        "ai",
+        "generative ai"
+      ],
+      "matched_legal_instruments": [
+        "act",
+        "notice"
+      ],
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "commission",
+        "committee"
+      ],
+      "matched_legal_actors": [
+        "commission",
+        "committee"
       ]
     },
     {
@@ -337,7 +1112,7 @@
       "summary": "New guidelines can help an organization determine ways to incorporate AI into its operations while mitigating cybersecurity risks.",
       "link": "https://www.nist.gov/news-events/news/2025/12/draft-nist-guidelines-rethink-cybersecurity-ai-era",
       "date": "2025-12-16T12:00:00+00:00",
-      "collected_at": "2026-06-02T16:59:48.542568+00:00",
+      "collected_at": "2026-06-06T21:39:32.618939+00:00",
       "source": "NIST News",
       "country": "USA",
       "flag": "🇺🇸",
@@ -346,6 +1121,12 @@
       "relevance_score": 85,
       "legal_update_type": "Стандарт / руководство",
       "legal_priority": 2,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 70,
+      "nlp_reason": "AI topic in title; legal term in title; legal action or procedural stage; AI close to legal instrument; AI close to legal action",
       "analysis_confidence": 85,
       "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -357,7 +1138,9 @@
       ],
       "matched_legal_actions": [
         "draft"
-      ]
+      ],
+      "matched_intent_terms": [],
+      "matched_legal_actors": []
     },
     {
       "id": "https_www_federalregister_gov_documents_2025_11_28_2025_21457_revised_inventorsh",
@@ -365,7 +1148,7 @@
       "summary": "The United States Patent and Trademark Office (USPTO) had issued inventorship guidance for AI-assisted inventions on February 13, 2024.\\1\\ The USPTO hereby rescinds the previously published Inventorship Guidance for AI-Assisted Inventions and replaces it with the guidance below. ---------------------------------------------------------------------------",
       "link": "https://www.federalregister.gov/documents/2025/11/28/2025-21457/revised-inventorship-guidance-for-ai-assisted-inventions",
       "date": "2025-11-28T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:45.678996+00:00",
+      "collected_at": "2026-06-06T21:40:21.676716+00:00",
       "source": "Federal Register (официальный API)",
       "country": "USA",
       "flag": "🇺🇸",
@@ -374,6 +1157,12 @@
       "relevance_score": 95,
       "legal_update_type": "Публикация акта",
       "legal_priority": 2,
+      "filter_mode": "strict",
+      "strict_match": true,
+      "date_status": "current",
+      "nlp_label": "strict",
+      "nlp_confidence": 84,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; legal action or procedural stage; AI close to legal instrument; AI close to legal action",
       "analysis_confidence": 95,
       "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -386,77 +1175,31 @@
       "matched_legal_actions": [
         "issued",
         "published"
-      ]
+      ],
+      "matched_intent_terms": [],
+      "matched_legal_actors": []
     },
     {
-      "id": "https_www_federalregister_gov_documents_2026_02_12_2026_02854_final_priority_and",
-      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Meaningful Learning Opportunities",
-      "summary": "The Department of Education (Department) announces a final priority and definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice, and ",
-      "link": "https://www.federalregister.gov/documents/2026/02/12/2026-02854/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-meaningful",
-      "date": "2026-12-02T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.396929+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 65,
-      "legal_update_type": "Публикация акта",
-      "legal_priority": 1,
-      "analysis_confidence": 65,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "notice"
-      ],
-      "matched_legal_actions": [
-        "final",
-        "proposed",
-        "published"
-      ]
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_03_11_2026_04704_ntia_innovation_fu",
-      "title": "NTIA Innovation Fund AI RAN Listening Session",
-      "summary": "The National Telecommunications and Information Administration (NTIA) will convene a hybrid industry listening session on the Public Wireless Supply Chain Innovation Fund (\"Innovation Fund\"). The session will discuss Innovation Fund progress to date and solicit industry input to help inform a future funding opportunity.",
-      "link": "https://www.federalregister.gov/documents/2026/03/11/2026-04704/ntia-innovation-fund-ai-ran-listening-session",
-      "date": "2026-11-03T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:46.665840+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 50,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 50,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "notice"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_04_10_2026_06952_american_ai_export",
-      "title": "American AI Exports Program; Call for Proposals for Pre-Set Consortia",
-      "summary": "The Department of Commerce (the Department), through the International Trade Administration (ITA), invites proposals for full- stack American AI export packages from industry-led `pre-set' consortia for designation under the American Artificial Intelligence (AI) Exports Program (the Program) established pursuant to Executive Order 14320, \"Promoting the Export of the American AI Technology Stack.\" A designated package will be presented by U.S. Government representatives as a standing, full-stack ",
-      "link": "https://www.federalregister.gov/documents/2026/04/10/2026-06952/american-ai-exports-program-call-for-proposals-for-pre-set-consortia",
-      "date": "2026-10-04T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.352525+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "id": "https_eur_lex_europa_eu_legal_content_AUTO_uri_CELEX_52025PC0836_qid_1_rid_7",
+      "title": "Proposal for a REGULATION OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL amending Regulations (EU) 2024/1689 and (EU) 2018/1139 as regards the simplification of the implementation of harmonised rules on artificial intelligence (Digital Omnibus on AI)",
+      "summary": "Результат EUR-Lex по запросу: \"general-purpose AI\"",
+      "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:52025PC0836&qid=1&rid=7",
+      "date": "2025-11-19T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:34.818145+00:00",
+      "source": "EUR-Lex (прямой поиск)",
+      "country": "EU",
+      "flag": "🇪🇺",
+      "category": "Законодательство",
+      "source_description": "Официальный реестр законодательства ЕС",
       "relevance_score": 70,
       "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
+      "legal_priority": 3,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 94,
+      "nlp_reason": "AI topic in title; legal term in title; formal legal update phrase; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
       "analysis_confidence": 70,
       "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -464,411 +1207,17 @@
         "artificial intelligence"
       ],
       "matched_legal_instruments": [
-        "executive order",
-        "law",
-        "notice"
+        "proposal",
+        "regulation"
       ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_01_08_2026_00206_request_for_inform",
-      "title": "Request for Information Regarding Security Considerations for Artificial Intelligence Agents",
-      "summary": "The Center for AI Standards and Innovation (CAISI), housed within the National Institute of Standards and Technology (NIST) at the Department of Commerce, is seeking information and insights from stakeholders on practices and methodologies for measuring and improving the secure development and deployment of artificial intelligence (AI) agent systems. AI agent systems are capable of taking autonomous actions that impact real-world systems or environments, and may be susceptible to hijacking, back",
-      "link": "https://www.federalregister.gov/documents/2026/01/08/2026-00206/request-for-information-regarding-security-considerations-for-artificial-intelligence-agents",
-      "date": "2026-08-01T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:56.938411+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Стандарт / руководство",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "ai systems",
-        "artificial intelligence"
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "parliament"
       ],
-      "matched_legal_instruments": [
-        "guidelines",
-        "notice",
-        "standards"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_05_28_2026_10602_ai_enabled_optimiz",
-      "title": "AI-Enabled Optimization of Early-Phase Clinical Trials Pilot Program; Request for Information; Extension of Comment Period",
-      "summary": "The Food and Drug Administration (FDA or the Agency) is extending the comment period for the notice entitled \"AI-Enabled Optimization of Early-Phase Clinical Trials Pilot Program; Request for Information\" that appeared in the Federal Register of April 29, 2026. In the notice, FDA requested comments to solicit input on a proposed pilot program to assess how artificial intelligence (AI)-enabled technologies can improve efficiency, speed, and quality of decision- making in early phase clinical tria",
-      "link": "https://www.federalregister.gov/documents/2026/05/28/2026-10602/ai-enabled-optimization-of-early-phase-clinical-trials-pilot-program-request-for-information",
-      "date": "2026-05-28T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:45.622669+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 85,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 85,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "notice"
-      ],
-      "matched_legal_actions": [
-        "proposed"
+      "matched_legal_actors": [
+        "council",
+        "parliament"
       ]
-    },
-    {
-      "id": "https_iapp_org_news_a_notes_from_the_asia_pacific_region_china_issues_new_ai_eth",
-      "title": "Notes from the Asia-Pacific region: China issues new AI ethics guidelines, Hong Kong conducts compliance checks",
-      "summary": "Notes from the Asia-Pacific region: China issues new AI ethics guidelines, Hong Kong conducts compliance checks 28 May 2026 OPINION",
-      "link": "https://iapp.org/news/a/notes-from-the-asia-pacific-region-china-issues-new-ai-ethics-guidelines-hong-kong-conducts-compliance-checks",
-      "date": "2026-05-28T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.488190+00:00",
-      "source": "IAPP – AI Governance Search",
-      "country": "Global",
-      "flag": "🌐",
-      "category": "Правовая аналитика",
-      "source_description": "Новости IAPP о privacy, AI governance и регулировании",
-      "relevance_score": 60,
-      "legal_update_type": "Стандарт / руководство",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "guidelines"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_iapp_org_news_a_when_the_framework_doesn_t_fit_ai_governance_for_the_rest_",
-      "title": "When the framework doesn't fit: AI governance for the rest of the world",
-      "summary": "When the framework doesn't fit: AI governance for the rest of the world 27 May 2026 OPINION",
-      "link": "https://iapp.org/news/a/when-the-framework-doesn-t-fit-ai-governance-for-the-rest-of-the-world",
-      "date": "2026-05-27T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.495664+00:00",
-      "source": "IAPP – AI Governance Search",
-      "country": "Global",
-      "flag": "🌐",
-      "category": "Правовая аналитика",
-      "source_description": "Новости IAPP о privacy, AI governance и регулировании",
-      "relevance_score": 60,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "framework"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_05_27_2026_10524_notice_of_open_pub",
-      "title": "Notice of Open Public Event",
-      "summary": "Notice is hereby given of the following event of the U.S.- China Economic and Security Review Commission. The Commission is mandated by Congress to investigate, assess, and report to Congress annually on \"the national security implications of the economic relationship between the United States and the People's Republic of China.\" Pursuant to this mandate, the Commission will hold a public event in Washington, DC on June 4, 2026 on \"Silicon to Sovereignty: China's Bid to Control the AI Stack from",
-      "link": "https://www.federalregister.gov/documents/2026/05/27/2026-10524/notice-of-open-public-event",
-      "date": "2026-05-27T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:46.622881+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 50,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 50,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "notice"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_05_22_2026_10347_final_priority_and",
-      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Promoting Patriotic Education",
-      "summary": "The Department of Education (Department) announces a final priority and definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. The final priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice,",
-      "link": "https://www.federalregister.gov/documents/2026/05/22/2026-10347/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-promoting",
-      "date": "2026-05-22T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.260611+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 85,
-      "legal_update_type": "Публикация акта",
-      "legal_priority": 1,
-      "analysis_confidence": 85,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "notice"
-      ],
-      "matched_legal_actions": [
-        "final",
-        "published"
-      ]
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_02_05_2026_02301_notice_of_public_m",
-      "title": "Notice of Public Meetings of the Maryland Advisory Committee to the U.S. Commission on Civil Rights",
-      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Maryland Advisory Committee (Committee) to the Commission will hold public meetings via Zoom. The purpose is for the committee to begin the proposal discussion on the chosen topic of artificial intelligence and its application in voting administration.",
-      "link": "https://www.federalregister.gov/documents/2026/02/05/2026-02301/notice-of-public-meetings-of-the-maryland-advisory-committee-to-the-us-commission-on-civil-rights",
-      "date": "2026-05-02T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.411158+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "act",
-        "notice",
-        "proposal"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_04_22_2026_07809_notice_of_public_m",
-      "title": "Notice of Public Meetings of the Maryland Advisory Committee to the U.S. Commission on Civil Rights",
-      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Maryland Advisory Committee (Committee) to the Commission will hold public meetings via Zoom. The purpose is for the committee to begin briefing planning on the chosen topic of artificial intelligence and its application in voting administration.",
-      "link": "https://www.federalregister.gov/documents/2026/04/22/2026-07809/notice-of-public-meetings-of-the-maryland-advisory-committee-to-the-us-commission-on-civil-rights",
-      "date": "2026-04-22T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.301273+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "act",
-        "notice"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_04_13_2026_07087_final_priority_and",
-      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Advancing Artificial Intelligence in Education",
-      "summary": "The Department of Education (Department) announces one priority and related definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use an entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence- Based Literacy, Educational Choice, ",
-      "link": "https://www.federalregister.gov/documents/2026/04/13/2026-07087/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-advancing",
-      "date": "2026-04-13T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.317070+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Публикация акта",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в заголовке; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием; отклонено: нет правового инструмента",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [],
-      "matched_legal_actions": [
-        "final",
-        "proposed",
-        "published"
-      ]
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_04_13_2026_07084_final_priority_and",
-      "title": "Final Priority and Definitions-Secretary's Supplemental Priority and Definitions on Career Pathways and Workforce Readiness",
-      "summary": "The Department of Education (Department) announces a final priority and definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice, and ",
-      "link": "https://www.federalregister.gov/documents/2026/04/13/2026-07084/final-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-career-pathways",
-      "date": "2026-04-13T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.334708+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 50,
-      "legal_update_type": "Публикация акта",
-      "legal_priority": 1,
-      "analysis_confidence": 50,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием; отклонено: нет правового инструмента",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [],
-      "matched_legal_actions": [
-        "final",
-        "proposed",
-        "published"
-      ]
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2026_04_03_2026_06542_notice_of_public_m",
-      "title": "Notice of Public Meetings of the Illinois Advisory Committee to the U.S. Commission on Civil Rights",
-      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Illinois Advisory Committee (Committee) to the U.S. Commission on Civil Rights will hold a public business meeting the third Tuesday of the month (April 2026 through December 2026) via Zoom at 3:30 p.m. CT. The purpose of these meetings is to discuss the Committee's project focused on the use of AI in law enforcement.",
-      "link": "https://www.federalregister.gov/documents/2026/04/03/2026-06542/notice-of-public-meetings-of-the-illinois-advisory-committee-to-the-us-commission-on-civil-rights",
-      "date": "2026-03-04T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:46.652695+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "act",
-        "law",
-        "notice"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2025_12_23_2025_23641_request_for_inform",
-      "title": "Request for Information: Accelerating the Adoption and Use of Artificial Intelligence as Part of Clinical Care",
-      "summary": "The HHS Office of the Deputy Secretary in collaboration with ASTP/ONC has published this Request for Information (RFI) to seek broad public comment on what HHS can do to accelerate the adoption and use of AI as part of clinical care.",
-      "link": "https://www.federalregister.gov/documents/2025/12/23/2025-23641/request-for-information-accelerating-the-adoption-and-use-of-artificial-intelligence-as-part-of",
-      "date": "2025-12-23T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.428745+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 95,
-      "legal_update_type": "Публикация акта",
-      "legal_priority": 1,
-      "analysis_confidence": 95,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; ИИ расположен рядом с правовым действием; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "notice",
-        "rfi"
-      ],
-      "matched_legal_actions": [
-        "published"
-      ]
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2025_12_19_2025_23399_notice_of_public_m",
-      "title": "Notice of Public Meetings of the Illinois Advisory Committee to the U.S. Commission on Civil Rights",
-      "summary": "Notice is hereby given, pursuant to the provisions of the rules and regulations of the U.S. Commission on Civil Rights (Commission) and the Federal Advisory Committee Act, that the Illinois Advisory Committee (Committee) to the U.S. Commission on Civil Rights will hold a public business meeting the last Wednesday of the month (January 2026 through March 2026) via Zoom at 3:30 p.m. CT. The purpose of these meetings is to discuss the Committee's project, Civil Rights, Civil Liberties, and Generati",
-      "link": "https://www.federalregister.gov/documents/2025/12/19/2025-23399/notice-of-public-meetings-of-the-illinois-advisory-committee-to-the-us-commission-on-civil-rights",
-      "date": "2025-12-19T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:47.726404+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai",
-        "generative ai"
-      ],
-      "matched_legal_instruments": [
-        "act",
-        "notice"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_federalregister_gov_documents_2025_12_16_2025_23092_ensuring_a_nationa",
-      "title": "Ensuring a National Policy Framework for Artificial Intelligence",
-      "summary": "Presidential Document",
-      "link": "https://www.federalregister.gov/documents/2025/12/16/2025-23092/ensuring-a-national-policy-framework-for-artificial-intelligence",
-      "date": "2025-12-16T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:44.435166+00:00",
-      "source": "Federal Register (официальный API)",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Регулятор",
-      "source_description": "Официальные правила, уведомления и proposed rules США",
-      "relevance_score": 60,
-      "legal_update_type": "Правовое событие",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "artificial intelligence"
-      ],
-      "matched_legal_instruments": [
-        "framework"
-      ],
-      "matched_legal_actions": []
-    },
-    {
-      "id": "https_www_nist_gov_news_events_news_2025_09_caisi_evaluation_deepseek_ai_models_",
-      "title": "CAISI Evaluation of DeepSeek AI Models Finds Shortcomings and Risks",
-      "summary": "The Center for AI Standards and Innovation at NIST evaluated several leading models from DeepSeek, an AI company based in the People’s Republic of China.",
-      "link": "https://www.nist.gov/news-events/news/2025/09/caisi-evaluation-deepseek-ai-models-finds-shortcomings-and-risks",
-      "date": "2025-09-30T12:00:00+00:00",
-      "collected_at": "2026-06-02T16:59:48.547802+00:00",
-      "source": "NIST News",
-      "country": "USA",
-      "flag": "🇺🇸",
-      "category": "Стандарты",
-      "source_description": "Национальный институт стандартов и технологий",
-      "relevance_score": 60,
-      "legal_update_type": "Стандарт / руководство",
-      "legal_priority": 1,
-      "analysis_confidence": 60,
-      "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
-      "matched_ai_terms": [
-        "ai"
-      ],
-      "matched_legal_instruments": [
-        "standards"
-      ],
-      "matched_legal_actions": []
     },
     {
       "id": "https_www_federalregister_gov_documents_2025_09_26_2025_18737_notice_of_request_",
@@ -876,7 +1225,7 @@
       "summary": "The Office of Science and Technology Policy (OSTP) requests input from all interested parties in identifying existing Federal statutes, regulations, agency rules, guidance, forms, and administrative processes that unnecessarily hinder the development, deployment, and adoption of artificial intelligence (AI) technologies within the United States. Through this Request for Information (RFI), OSTP is seeking input from the public, including private sector organizations, industry groups, academia, st",
       "link": "https://www.federalregister.gov/documents/2025/09/26/2025-18737/notice-of-request-for-information-regulatory-reform-on-artificial-intelligence",
       "date": "2025-09-26T00:00:00+00:00",
-      "collected_at": "2026-06-02T17:00:54.875070+00:00",
+      "collected_at": "2026-06-06T21:40:30.318242+00:00",
       "source": "Federal Register (официальный API)",
       "country": "USA",
       "flag": "🇺🇸",
@@ -885,6 +1234,12 @@
       "relevance_score": 60,
       "legal_update_type": "Стандарт / руководство",
       "legal_priority": 1,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 80,
+      "nlp_reason": "AI topic in title; legal term in title; public/legal actor; legal-policy intent or plan; AI close to legal instrument; AI close to policy intent; legal term close to plan/intent",
       "analysis_confidence": 60,
       "analysis_reason": "ИИ явно указан в заголовке; найден правовой инструмент; ИИ расположен рядом с правовым инструментом; официальный правовой материал об ИИ",
       "matched_ai_terms": [
@@ -896,33 +1251,980 @@
         "notice",
         "rfi"
       ],
-      "matched_legal_actions": []
+      "matched_legal_actions": [],
+      "matched_intent_terms": [
+        "agency"
+      ],
+      "matched_legal_actors": [
+        "agency"
+      ]
+    },
+    {
+      "id": "https_www_federalregister_gov_documents_2025_09_25_2025_18640_proposed_priority_",
+      "title": "Proposed Priority and Definitions-Secretary's Supplemental Priority and Definitions on Meaningful Learning Opportunities",
+      "summary": "The Secretary proposes one additional priority and related definitions for use in currently authorized discretionary grant programs or programs that may be authorized in the future. The Secretary may choose to use the entire priority for a grant program or a particular competition or use one or more of the priority's component parts. This priority and definitions augment the initial set of three Secretary's Supplemental Priorities on Evidence-Based Literacy, Educational Choice, and Returning Edu",
+      "link": "https://www.federalregister.gov/documents/2025/09/25/2025-18640/proposed-priority-and-definitions-secretarys-supplemental-priority-and-definitions-on-meaningful",
+      "date": "2025-09-25T00:00:00+00:00",
+      "collected_at": "2026-06-06T21:40:33.060386+00:00",
+      "source": "Federal Register (официальный API)",
+      "country": "USA",
+      "flag": "🇺🇸",
+      "category": "Регулятор",
+      "source_description": "Официальные правила, уведомления и proposed rules США",
+      "relevance_score": 65,
+      "legal_update_type": "Публикация акта",
+      "legal_priority": 3,
+      "filter_mode": "monitoring",
+      "strict_match": false,
+      "date_status": "current",
+      "nlp_label": "monitoring",
+      "nlp_confidence": 70,
+      "nlp_reason": "AI topic in text; legal instrument in text; formal legal update phrase; legal action or procedural stage; legal-policy intent or plan; AI close to legal action",
+      "analysis_confidence": 65,
+      "analysis_reason": "ИИ явно указан в описании или тексте; найден правовой инструмент; найдено правовое действие или стадия; найден признак законодательной или регуляторной новеллы; ИИ расположен рядом с правовым действием",
+      "matched_ai_terms": [
+        "artificial intelligence"
+      ],
+      "matched_legal_instruments": [
+        "proposed rule"
+      ],
+      "matched_legal_actions": [
+        "final",
+        "proposed",
+        "published"
+      ],
+      "matched_intent_terms": [
+        "may"
+      ],
+      "matched_legal_actors": []
     }
   ],
   "stats": {
-    "total": 32,
+    "total": 31,
+    "strict_total": 15,
+    "monitoring_total": 16,
     "countries": {
-      "USA": 25,
-      "EU": 3,
-      "Global": 2,
+      "USA": 22,
+      "EU": 7,
       "Japan": 1,
       "South Korea": 1
     },
     "categories": {
-      "Регулятор": 21,
-      "Законодательство": 4,
-      "Стандарты": 4,
-      "Правовая аналитика": 2,
+      "Регулятор": 19,
+      "Законодательство": 8,
+      "Стандарты": 3,
       "Госуправление": 1
     },
     "top_sources": {
-      "Federal Register (официальный API)": 21,
-      "NIST News": 4,
-      "EUR-Lex (прямой поиск)": 3,
-      "IAPP – AI Governance Search": 2,
-      "Japan Government AI GENAI": 1
+      "Federal Register (официальный API)": 19,
+      "EUR-Lex (прямой поиск)": 7,
+      "NIST News": 3,
+      "Japan Cabinet Office AI Act": 1,
+      "South Korea AI Basic Act": 1
     }
   },
-  "last_updated": "2026-06-02T17:01:35.761339+00:00",
-  "sources_count": 72
+  "last_updated": "2026-06-06T21:41:08.649356+00:00",
+  "sources_count": 72,
+  "diagnostics": [
+    {
+      "name": "EUR-Lex (EU Law)",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTP 404",
+      "url": "https://eur-lex.europa.eu/rss/rss.xml?type=qd&qid=1&lg=EN"
+    },
+    {
+      "name": "European Parliament News",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTP 404",
+      "url": "https://www.europarl.europa.eu/rss/doc/news-and-press-releases/en.rss"
+    },
+    {
+      "name": "Council of the EU Press Releases",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTP 403",
+      "url": "https://www.consilium.europa.eu/en/rss/press-releases.xml"
+    },
+    {
+      "name": "EDPB News",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.edpb.europa.eu/rss/news_en"
+    },
+    {
+      "name": "EDPB Publications",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.edpb.europa.eu/rss/publications_en"
+    },
+    {
+      "name": "White House Briefings",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.whitehouse.gov/feed/"
+    },
+    {
+      "name": "FTC News",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTP 404",
+      "url": "https://www.ftc.gov/feeds/news.xml"
+    },
+    {
+      "name": "NIST News",
+      "status": "ok",
+      "raw_count": 40,
+      "candidate_count": 40,
+      "accepted_count": 3,
+      "strict_count": 3,
+      "monitoring_count": 0,
+      "rejected_count": 37,
+      "message": "ok",
+      "url": "https://www.nist.gov/news-events/news/rss.xml"
+    },
+    {
+      "name": "Federal Register – AI",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=artificial+intelligence"
+    },
+    {
+      "name": "OECD AI Policy Observatory",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://oecd.ai/rss.xml"
+    },
+    {
+      "name": "UNESCO AI Ethics",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.unesco.org/en/rss/artificial-intelligence"
+    },
+    {
+      "name": "UK GOV – Technology Policy",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=artificial+intelligence&organisations[]=department-for-science-innovation-and-technology"
+    },
+    {
+      "name": "AI Policy Newsletter (CSET)",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTP 403",
+      "url": "https://cset.georgetown.edu/feed/"
+    },
+    {
+      "name": "IAPP AI Governance",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTP 404",
+      "url": "https://iapp.org/feed/"
+    },
+    {
+      "name": "Japan Digital Agency",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.digital.go.jp/rss/news.xml"
+    },
+    {
+      "name": "Japan METI",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.meti.go.jp/ml_index_en_atom.xml"
+    },
+    {
+      "name": "Federal Register – Artificial Intelligence Regulation",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=artificial+intelligence+regulation&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Artificial Intelligence Regulation",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=artificial+intelligence+regulation"
+    },
+    {
+      "name": "Federal Register – Artificial Intelligence Law",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=artificial+intelligence+law&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Artificial Intelligence Law",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=artificial+intelligence+law"
+    },
+    {
+      "name": "Federal Register – Ai Act",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=AI+Act&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Ai Act",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=AI+Act"
+    },
+    {
+      "name": "Federal Register – Ai Regulation",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=AI+regulation&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Ai Regulation",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=AI+regulation"
+    },
+    {
+      "name": "Federal Register – Algorithmic Accountability",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=algorithmic+accountability&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Algorithmic Accountability",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=algorithmic+accountability"
+    },
+    {
+      "name": "Federal Register – Automated Decision Making",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=automated+decision+making&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Automated Decision Making",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=automated+decision+making"
+    },
+    {
+      "name": "Federal Register – Generative Ai Regulation",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=generative+AI+regulation&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Generative Ai Regulation",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=generative+AI+regulation"
+    },
+    {
+      "name": "Federal Register – Deepfake Regulation",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=deepfake+regulation&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Deepfake Regulation",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=deepfake+regulation"
+    },
+    {
+      "name": "Federal Register – Facial Recognition Regulation",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=facial+recognition+regulation&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Facial Recognition Regulation",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=facial+recognition+regulation"
+    },
+    {
+      "name": "Federal Register – Ai Liability Directive",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=AI+liability+directive&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Ai Liability Directive",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=AI+liability+directive"
+    },
+    {
+      "name": "Federal Register – Ai Regulatory Sandbox",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=AI+regulatory+sandbox&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Ai Regulatory Sandbox",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=AI+regulatory+sandbox"
+    },
+    {
+      "name": "Federal Register – Ai Code Of Practice",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=AI+code+of+practice&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – Ai Code Of Practice",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=AI+code+of+practice"
+    },
+    {
+      "name": "Federal Register – General-Purpose Ai Obligations",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=general-purpose+AI+obligations&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – General-Purpose Ai Obligations",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=general-purpose+AI+obligations"
+    },
+    {
+      "name": "Federal Register – High-Risk Ai Obligations",
+      "status": "failed",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "empty or broken feed",
+      "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=high-risk+AI+obligations&conditions%5Bpublication_date%5D%5Bgte%5D=2025-06-06"
+    },
+    {
+      "name": "UK GOV – High-Risk Ai Obligations",
+      "status": "ok",
+      "raw_count": 20,
+      "candidate_count": 20,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 20,
+      "message": "source returned no relevant records",
+      "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=high-risk+AI+obligations"
+    },
+    {
+      "name": "DataGuidance – Artificial Intelligence",
+      "status": "ok",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "source returned no relevant records",
+      "url": "https://www.dataguidance.com/topics/artificial-intelligence"
+    },
+    {
+      "name": "IAPP – AI Governance Search",
+      "status": "ok",
+      "raw_count": 26,
+      "candidate_count": 26,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 97,
+      "message": "source returned no relevant records",
+      "url": "https://iapp.org/news/?q=artificial%20intelligence%20regulation"
+    },
+    {
+      "name": "ICO – AI Search",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "404 Client Error: Not Found for url: https://ico.org.uk/search/?q=artificial%20intelligence",
+      "url": "https://ico.org.uk/search/?q=artificial%20intelligence"
+    },
+    {
+      "name": "European Commission Digital Strategy – AI",
+      "status": "ok",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "source returned no relevant records",
+      "url": "https://digital-strategy.ec.europa.eu/en/search?query=artificial%20intelligence%20act"
+    },
+    {
+      "name": "Canada.ca – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.canada.ca', port=443): Max retries exceeded with url: /en/services/science/innovation/artificial-intelligence.html (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='www.canada.ca', port",
+      "url": "https://www.canada.ca/en/services/science/innovation/artificial-intelligence.html"
+    },
+    {
+      "name": "Canada.ca – Responsible AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.canada.ca', port=443): Max retries exceeded with url: /en/government/system/digital-government/digital-government-innovations/responsible-use-ai.html (Caused by ReadTimeoutError(\"HTTPSConnec",
+      "url": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai.html"
+    },
+    {
+      "name": "Australia Industry – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.industry.gov.au', port=443): Max retries exceeded with url: /search?query=artificial%20intelligence%20regulation (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='www.industry.gov.au', ",
+      "url": "https://www.industry.gov.au/search?query=artificial%20intelligence%20regulation"
+    },
+    {
+      "name": "Australia Attorney-General – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.ag.gov.au', port=443): Max retries exceeded with url: /search?search=artificial%20intelligence (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='www.ag.gov.au', port=443): Read timed ou",
+      "url": "https://www.ag.gov.au/search?search=artificial%20intelligence"
+    },
+    {
+      "name": "Australia OAIC – AI",
+      "status": "ok",
+      "raw_count": 1,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 67,
+      "message": "source returned no relevant records",
+      "url": "https://www.oaic.gov.au/search?query=artificial%20intelligence"
+    },
+    {
+      "name": "Singapore IMDA – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "403 Client Error: Forbidden for url: https://www.imda.gov.sg/search?keyword=artificial%20intelligence",
+      "url": "https://www.imda.gov.sg/search?keyword=artificial%20intelligence"
+    },
+    {
+      "name": "Singapore PDPC – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "403 Client Error: Forbidden for url: https://www.pdpc.gov.sg/search?keyword=artificial%20intelligence",
+      "url": "https://www.pdpc.gov.sg/search?keyword=artificial%20intelligence"
+    },
+    {
+      "name": "Singapore MDDI – AI",
+      "status": "ok",
+      "raw_count": 1,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 8,
+      "message": "source returned no relevant records",
+      "url": "https://www.mddi.gov.sg/search?query=artificial%20intelligence"
+    },
+    {
+      "name": "Japan Digital Agency – AI",
+      "status": "ok",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 46,
+      "message": "source returned no relevant records",
+      "url": "https://www.digital.go.jp/en/search?q=artificial%20intelligence"
+    },
+    {
+      "name": "South Korea Korea.net – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "404 Client Error: Not Found for url: https://www.korea.net/Search?keyword=artificial%20intelligence%20act",
+      "url": "https://www.korea.net/Search?keyword=artificial%20intelligence%20act"
+    },
+    {
+      "name": "Brazil Senate – AI",
+      "status": "ok",
+      "raw_count": 15,
+      "candidate_count": 15,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 50,
+      "message": "source returned no relevant records",
+      "url": "https://www12.senado.leg.br/noticias/busca?SearchableText=intelig%C3%AAncia%20artificial"
+    },
+    {
+      "name": "Library of Congress GLM – AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "403 Client Error: Forbidden for url: https://www.loc.gov/search/?fa=partof:global+legal+monitor&q=artificial+intelligence",
+      "url": "https://www.loc.gov/search/?fa=partof:global+legal+monitor&q=artificial+intelligence"
+    },
+    {
+      "name": "EUR-Lex (прямой поиск)",
+      "status": "pending",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "waiting",
+      "url": ""
+    },
+    {
+      "name": "US Congress (прямой поиск)",
+      "status": "pending",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "waiting",
+      "url": ""
+    },
+    {
+      "name": "Federal Register (официальный API)",
+      "status": "pending",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "waiting",
+      "url": ""
+    },
+    {
+      "name": "Canada AI Portal",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.canada.ca', port=443): Max retries exceeded with url: /en/services/science/innovation/artificial-intelligence.html (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='www.canada.ca', port",
+      "url": "https://www.canada.ca/en/services/science/innovation/artificial-intelligence.html"
+    },
+    {
+      "name": "Canada Responsible AI",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.canada.ca', port=443): Max retries exceeded with url: /en/government/system/digital-government/digital-government-innovations/responsible-use-ai.html (Caused by ReadTimeoutError(\"HTTPSConnec",
+      "url": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai.html"
+    },
+    {
+      "name": "Australia National AI Plan",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.industry.gov.au', port=443): Max retries exceeded with url: /publications/national-ai-plan (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='www.industry.gov.au', port=443): Read timed ",
+      "url": "https://www.industry.gov.au/publications/national-ai-plan"
+    },
+    {
+      "name": "Australia Attorney-General AI Transparency",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "HTTPSConnectionPool(host='www.ag.gov.au', port=443): Max retries exceeded with url: /about-us/accountability-and-reporting/attorney-generals-department-artificial-intelligence-transparency-statement (Caused by ReadTimeou",
+      "url": "https://www.ag.gov.au/about-us/accountability-and-reporting/attorney-generals-department-artificial-intelligence-transparency-statement"
+    },
+    {
+      "name": "Singapore Agentic AI Framework",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "403 Client Error: Forbidden for url: https://www.imda.gov.sg/resources/press-releases-factsheets-and-speeches/press-releases/2026/new-model-ai-governance-framework-for-agentic-ai",
+      "url": "https://www.imda.gov.sg/resources/press-releases-factsheets-and-speeches/press-releases/2026/new-model-ai-governance-framework-for-agentic-ai"
+    },
+    {
+      "name": "Singapore AI Governance Framework",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "403 Client Error: Forbidden for url: https://www.pdpc.gov.sg/help-and-resources/2020/01/model-ai-governance-framework",
+      "url": "https://www.pdpc.gov.sg/help-and-resources/2020/01/model-ai-governance-framework"
+    },
+    {
+      "name": "Japan Cabinet Office AI Act",
+      "status": "ok",
+      "raw_count": 1,
+      "candidate_count": 1,
+      "accepted_count": 1,
+      "strict_count": 1,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "ok",
+      "url": "https://www8.cao.go.jp/cstp/ai/ai_act/ai_act.html"
+    },
+    {
+      "name": "South Korea AI Basic Act",
+      "status": "ok",
+      "raw_count": 1,
+      "candidate_count": 1,
+      "accepted_count": 1,
+      "strict_count": 1,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "ok",
+      "url": "https://www.korea.net/NewsFocus/policies/view?articleId=286183"
+    },
+    {
+      "name": "Brazil AI Bill",
+      "status": "error",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "403 Client Error: Forbidden for url: https://www.loc.gov/item/global-legal-monitor/2025-05-23/brazil-senate-advances-discussions-on-bill-to-regulate-ai-use/",
+      "url": "https://www.loc.gov/item/global-legal-monitor/2025-05-23/brazil-senate-advances-discussions-on-bill-to-regulate-ai-use/"
+    },
+    {
+      "name": "Congress.gov",
+      "status": "ok",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "strict_count": 0,
+      "monitoring_count": 0,
+      "rejected_count": 0,
+      "message": "source returned no relevant records",
+      "url": ""
+    },
+    {
+      "name": "Federal Register API",
+      "status": "ok",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 19,
+      "strict_count": 8,
+      "monitoring_count": 11,
+      "rejected_count": 0,
+      "message": "ok",
+      "url": ""
+    },
+    {
+      "name": "EUR-Lex (прямой)",
+      "status": "ok",
+      "raw_count": 0,
+      "candidate_count": 0,
+      "accepted_count": 7,
+      "strict_count": 2,
+      "monitoring_count": 5,
+      "rejected_count": 0,
+      "message": "ok",
+      "url": ""
+    }
+  ]
 }
