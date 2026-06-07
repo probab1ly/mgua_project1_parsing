@@ -1,0 +1,15 @@
+[
+  {
+    "id": "20260607_192320_447508",
+    "created_at": "2026-06-07T19:23:20.447508+00:00",
+    "total": 33,
+    "strict_total": 19,
+    "monitoring_total": 14,
+    "sources_count": 45,
+    "diagnostics_total": 45,
+    "ok_sources": 37,
+    "problem_sources": 8,
+    "excel_file": "update_20260607_192320_447508.xlsx",
+    "auto_refresh": false
+  }
+]

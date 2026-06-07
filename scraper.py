@@ -19,12 +19,20 @@ import urllib.parse
 REQUEST_TIMEOUT = 12
 SLOW_REQUEST_TIMEOUT = 24
 HTML_REQUEST_TIMEOUT = 10
+SLOW_HOSTS = {
+    "www.canada.ca",
+    "www.industry.gov.au",
+    "www.ag.gov.au",
+    "www.oaic.gov.au",
+    "www12.senado.leg.br",
+}
 # Максимум параллельных потоков
 MAX_WORKERS = 8
 # Общий лимит одного ручного обновления, чтобы приложение не зависало на медленных сайтах.
 COLLECT_TIMEOUT = 180
-# Берем актуальные материалы минимум за последний год.
-RECENT_DAYS = 365
+# Берем материалы минимум за последний год, с небольшим запасом для важных
+# актов на границе периода (например, начало июня 2025 при проверке в июне 2026).
+RECENT_DAYS = 400
 
 STRICT_MODE = "strict"
 MONITORING_MODE = "monitoring"
@@ -104,7 +112,7 @@ def summarize_article_modes(articles: list[dict]) -> dict:
 
 def final_source_status(name: str) -> str:
     current = SOURCE_DIAGNOSTICS.get(name, {}).get("status")
-    return current if current in {"failed", "timeout", "error"} else "ok"
+    return current if current in {"failed", "timeout", "error", "unavailable"} else "ok"
 
 def fix_url(url: str) -> str:
     """Убирает лишние точки и пробелы из URL."""
@@ -115,6 +123,39 @@ def fix_url(url: str) -> str:
     url = re.sub(r'(https?://[^/]+)\./([^\s])', r'\1/\2', url)  # с путём
     url = re.sub(r'(https?://[^/]+)\.$', r'\1', url)             # без пути
     return url
+
+
+def canonical_url(url: str) -> str:
+    """Нормализует URL для дедупликации одинаковых материалов."""
+    if not url:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(fix_url(url))
+        ignored = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
+        if parsed.netloc.lower() == "eur-lex.europa.eu":
+            ignored.update({"qid", "rid"})
+        query = [
+            (key, value)
+            for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+            if key.lower() not in ignored
+        ]
+        return urllib.parse.urlunparse((
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            parsed.path.rstrip("/"),
+            "",
+            urllib.parse.urlencode(query),
+            "",
+        ))
+    except Exception:
+        return url.strip()
+
+
+def article_title_key(title: str) -> str:
+    text = re.sub(r"\s+", " ", (title or "").lower()).strip()
+    text = re.sub(r"[^\w\s-]", "", text)
+    return text[:180]
+
 
 def is_valid_url(url: str) -> bool:
     try:
@@ -127,64 +168,7 @@ def is_valid_url(url: str) -> bool:
 # ИСТОЧНИКИ RSS / ATOM
 # ─────────────────────────────────────────────
 RSS_SOURCES = [
-    # ── ЕВРОПЕЙСКИЙ СОЮЗ ──────────────────────
-    {
-        "name": "EUR-Lex (EU Law)",
-        "url": "https://eur-lex.europa.eu/rss/rss.xml?type=qd&qid=1&lg=EN",
-        "country": "EU",
-        "flag": "🇪🇺",
-        "category": "Законодательство",
-        "description": "Официальный правовой портал ЕС",
-    },
-    {
-        "name": "European Parliament News",
-        "url": "https://www.europarl.europa.eu/rss/doc/news-and-press-releases/en.rss",
-        "country": "EU",
-        "flag": "🇪🇺",
-        "category": "Парламент",
-        "description": "Новости Европейского парламента",
-    },
-    {
-        "name": "Council of the EU Press Releases",
-        "url": "https://www.consilium.europa.eu/en/rss/press-releases.xml",
-        "country": "EU",
-        "flag": "🇪🇺",
-        "category": "Совет ЕС",
-        "description": "Пресс-релизы Совета ЕС и Европейского совета",
-    },
-    {
-        "name": "EDPB News",
-        "url": "https://www.edpb.europa.eu/rss/news_en",
-        "country": "EU",
-        "flag": "🇪🇺",
-        "category": "Регулятор",
-        "description": "Новости Европейского совета по защите данных",
-    },
-    {
-        "name": "EDPB Publications",
-        "url": "https://www.edpb.europa.eu/rss/publications_en",
-        "country": "EU",
-        "flag": "🇪🇺",
-        "category": "Руководства",
-        "description": "Публикации, мнения и руководства EDPB",
-    },
     # ── США ───────────────────────────────────
-    {
-        "name": "White House Briefings",
-        "url": "https://www.whitehouse.gov/feed/",
-        "country": "USA",
-        "flag": "🇺🇸",
-        "category": "Исполнительная власть",
-        "description": "Официальный сайт Белого дома",
-    },
-    {
-        "name": "FTC News",
-        "url": "https://www.ftc.gov/feeds/news.xml",
-        "country": "USA",
-        "flag": "🇺🇸",
-        "category": "Регулятор",
-        "description": "Федеральная торговая комиссия США",
-    },
     {
         "name": "NIST News",
         "url": "https://www.nist.gov/news-events/news/rss.xml",
@@ -192,31 +176,6 @@ RSS_SOURCES = [
         "flag": "🇺🇸",
         "category": "Стандарты",
         "description": "Национальный институт стандартов и технологий",
-    },
-    {
-        "name": "Federal Register – AI",
-        "url": "https://www.federalregister.gov/documents/search.rss?conditions%5Bterm%5D=artificial+intelligence",
-        "country": "USA",
-        "flag": "🇺🇸",
-        "category": "Регулятор",
-        "description": "Официальный журнал федеральных правил и уведомлений США",
-    },
-    # ── МЕЖДУНАРОДНЫЕ ОРГАНИЗАЦИИ ─────────────
-    {
-        "name": "OECD AI Policy Observatory",
-        "url": "https://oecd.ai/rss.xml",
-        "country": "OECD",
-        "flag": "🌐",
-        "category": "Международные",
-        "description": "ОЭСР — наблюдатель за политикой в области ИИ",
-    },
-    {
-        "name": "UNESCO AI Ethics",
-        "url": "https://www.unesco.org/en/rss/artificial-intelligence",
-        "country": "UNESCO",
-        "flag": "🌐",
-        "category": "Международные",
-        "description": "ЮНЕСКО — этика искусственного интеллекта",
     },
     # ── ВЕЛИКОБРИТАНИЯ ────────────────────────
     {
@@ -227,23 +186,7 @@ RSS_SOURCES = [
         "category": "Законодательство",
         "description": "Правительство Великобритании — технологическая политика",
     },
-    # ── СПЕЦИАЛИЗИРОВАННЫЕ ПРАВОВЫЕ И POLICY-ИСТОЧНИКИ ────────────────
-    {
-        "name": "AI Policy Newsletter (CSET)",
-        "url": "https://cset.georgetown.edu/feed/",
-        "country": "Global",
-        "flag": "🌐",
-        "category": "Аналитика",
-        "description": "Центр безопасности и новых технологий Джорджтауна",
-    },
-    {
-        "name": "IAPP AI Governance",
-        "url": "https://iapp.org/feed/",
-        "country": "Global",
-        "flag": "🌐",
-        "category": "Правовая аналитика",
-        "description": "Новости IAPP по privacy, AI governance и регулированию",
-    },
+    # ── ЯПОНИЯ ────────────────────────────────
     {
         "name": "Japan Digital Agency",
         "url": "https://www.digital.go.jp/rss/news.xml",
@@ -251,14 +194,6 @@ RSS_SOURCES = [
         "flag": "🇯🇵",
         "category": "Госуправление",
         "description": "Новости Digital Agency Japan, включая ИИ в государственном секторе",
-    },
-    {
-        "name": "Japan METI",
-        "url": "https://www.meti.go.jp/ml_index_en_atom.xml",
-        "country": "Japan",
-        "flag": "🇯🇵",
-        "category": "Регулятор",
-        "description": "Новости Министерства экономики, торговли и промышленности Японии",
     },
 ]
 
@@ -281,24 +216,11 @@ TARGETED_FEED_QUERIES = [
 
 
 def build_targeted_sources() -> list[dict]:
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=RECENT_DAYS)).date().isoformat()
     sources = []
     for query in TARGETED_FEED_QUERIES:
         encoded = urllib.parse.quote_plus(query)
         label = query.title()
         sources.extend([
-            {
-                "name": f"Federal Register – {label}",
-                "url": (
-                    "https://www.federalregister.gov/documents/search.rss"
-                    f"?conditions%5Bterm%5D={encoded}"
-                    f"&conditions%5Bpublication_date%5D%5Bgte%5D={cutoff}"
-                ),
-                "country": "USA",
-                "flag": "🇺🇸",
-                "category": "Регулятор",
-                "description": "Официальный журнал федеральных правил и уведомлений США",
-            },
             {
                 "name": f"UK GOV – {label}",
                 "url": (
@@ -364,18 +286,11 @@ def is_allowed_source_url(url: str) -> bool:
 
 
 def request_timeout_for(url: str) -> int:
-    slow_hosts = {
-        "www.canada.ca",
-        "www.industry.gov.au",
-        "www.ag.gov.au",
-        "www.oaic.gov.au",
-        "www12.senado.leg.br",
-    }
-    return SLOW_REQUEST_TIMEOUT if hostname(url) in slow_hosts else REQUEST_TIMEOUT
+    return SLOW_REQUEST_TIMEOUT if hostname(url) in SLOW_HOSTS else REQUEST_TIMEOUT
 
 
 def html_timeout_for(url: str) -> int:
-    return min(request_timeout_for(url), HTML_REQUEST_TIMEOUT)
+    return SLOW_REQUEST_TIMEOUT if hostname(url) in SLOW_HOSTS else HTML_REQUEST_TIMEOUT
 
 
 def is_broad_source(source: dict) -> bool:
@@ -1068,18 +983,21 @@ def fetch_rss(source: dict) -> list[dict]:
             update_source_diagnostic(source["name"], status="failed", message="domain is not in allowlist")
             return []
 
-        feed = feedparser.parse(source["url"], agent=HEADERS["User-Agent"], request_headers=HEADERS)
+        resp = SESSION.get(source["url"], timeout=request_timeout_for(source["url"]))
+        if resp.status_code in (403, 404, 410):
+            logger.warning(f"[{source['name']}] Недоступен (HTTP {resp.status_code}), пропуск")
+            update_source_diagnostic(source["name"], status="unavailable", message=f"HTTP {resp.status_code}: source feed is unavailable or blocked")
+            return []
+        resp.raise_for_status()
+
+        feed = feedparser.parse(resp.content)
         raw_count = len(feed.entries)
         update_source_diagnostic(source["name"], raw_count=raw_count, candidate_count=raw_count)
         logger.info(f"[{source['name']}] Получено записей: {len(feed.entries)}")
 
-        if feed.get("status", 200) in (403, 404, 410):
-            logger.warning(f"[{source['name']}] Недоступен (HTTP {feed.get('status')}), пропуск")
-            update_source_diagnostic(source["name"], status="failed", message=f"HTTP {feed.get('status')}")
-            return []
         if feed.bozo and not feed.entries:
             logger.warning(f"[{source['name']}] Пустая или битая лента, пропуск")
-            update_source_diagnostic(source["name"], status="failed", message="empty or broken feed")
+            update_source_diagnostic(source["name"], status="unavailable", message="empty or broken feed")
             return []
         
         for entry in feed.entries:
@@ -1379,8 +1297,8 @@ HTML_SEARCH_SOURCES = [
         "base_url": "https://iapp.org",
     },
     {
-        "name": "ICO – AI Search",
-        "url": "https://ico.org.uk/search/?q=artificial%20intelligence",
+        "name": "ICO – AI News and Blogs",
+        "url": "https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/",
         "country": "UK",
         "flag": "🇬🇧",
         "category": "Регулятор",
@@ -1395,69 +1313,6 @@ HTML_SEARCH_SOURCES = [
         "category": "Еврокомиссия",
         "description": "Новости и публикации Еврокомиссии по цифровому регулированию и ИИ",
         "base_url": "https://digital-strategy.ec.europa.eu",
-    },
-    {
-        "name": "Canada.ca – AI",
-        "url": "https://www.canada.ca/en/services/science/innovation/artificial-intelligence.html",
-        "country": "Canada",
-        "flag": "🇨🇦",
-        "category": "Госуправление",
-        "description": "Официальная страница Канады по AI policy, regulation и responsible AI",
-        "base_url": "https://www.canada.ca",
-    },
-    {
-        "name": "Canada.ca – Responsible AI",
-        "url": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai.html",
-        "country": "Canada",
-        "flag": "🇨🇦",
-        "category": "Руководства",
-        "description": "Responsible use of AI in Government of Canada",
-        "base_url": "https://www.canada.ca",
-    },
-    {
-        "name": "Australia Industry – AI",
-        "url": "https://www.industry.gov.au/search?query=artificial%20intelligence%20regulation",
-        "country": "Australia",
-        "flag": "🇦🇺",
-        "category": "Госуправление",
-        "description": "Department of Industry, Science and Resources: AI policy and regulation",
-        "base_url": "https://www.industry.gov.au",
-    },
-    {
-        "name": "Australia Attorney-General – AI",
-        "url": "https://www.ag.gov.au/search?search=artificial%20intelligence",
-        "country": "Australia",
-        "flag": "🇦🇺",
-        "category": "Законодательство",
-        "description": "Attorney-General's Department: правовые материалы и реформы, связанные с ИИ",
-        "base_url": "https://www.ag.gov.au",
-    },
-    {
-        "name": "Australia OAIC – AI",
-        "url": "https://www.oaic.gov.au/search?query=artificial%20intelligence",
-        "country": "Australia",
-        "flag": "🇦🇺",
-        "category": "Регулятор",
-        "description": "Office of the Australian Information Commissioner: privacy, automated decisions and AI",
-        "base_url": "https://www.oaic.gov.au",
-    },
-    {
-        "name": "Singapore IMDA – AI",
-        "url": "https://www.imda.gov.sg/search?keyword=artificial%20intelligence",
-        "country": "Singapore",
-        "flag": "🇸🇬",
-        "category": "Регулятор",
-        "description": "IMDA: AI governance frameworks, press releases and guidance",
-        "base_url": "https://www.imda.gov.sg",
-    },
-    {
-        "name": "Singapore PDPC – AI",
-        "url": "https://www.pdpc.gov.sg/search?keyword=artificial%20intelligence",
-        "country": "Singapore",
-        "flag": "🇸🇬",
-        "category": "Регулятор",
-        "description": "PDPC Singapore: AI governance and data protection resources",
-        "base_url": "https://www.pdpc.gov.sg",
     },
     {
         "name": "Singapore MDDI – AI",
@@ -1476,33 +1331,6 @@ HTML_SEARCH_SOURCES = [
         "category": "Госуправление",
         "description": "Digital Agency Japan: AI in government and digital policy",
         "base_url": "https://www.digital.go.jp",
-    },
-    {
-        "name": "South Korea Korea.net – AI",
-        "url": "https://www.korea.net/Search?keyword=artificial%20intelligence%20act",
-        "country": "South Korea",
-        "flag": "🇰🇷",
-        "category": "Законодательство",
-        "description": "Official Korea.net policy news, включая AI Basic Act",
-        "base_url": "https://www.korea.net",
-    },
-    {
-        "name": "Brazil Senate – AI",
-        "url": "https://www12.senado.leg.br/noticias/busca?SearchableText=intelig%C3%AAncia%20artificial",
-        "country": "Brazil",
-        "flag": "🇧🇷",
-        "category": "Законопроекты",
-        "description": "Новости Федерального сената Бразилии по законопроектам об ИИ",
-        "base_url": "https://www12.senado.leg.br",
-    },
-    {
-        "name": "Library of Congress GLM – AI",
-        "url": "https://www.loc.gov/search/?fa=partof:global+legal+monitor&q=artificial+intelligence",
-        "country": "Global",
-        "flag": "🌐",
-        "category": "Расширенный режим",
-        "description": "Global Legal Monitor: официальные правовые обзоры по странам",
-        "base_url": "https://www.loc.gov",
     },
 ]
 
@@ -1531,6 +1359,94 @@ DIRECT_SEARCH_SOURCES = [
 ]
 
 OFFICIAL_PAGE_SOURCES = [
+    {
+        "name": "EU AI Act Official Page",
+        "url": "https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Законодательство",
+        "description": "European Commission official AI Act page with latest implementation news and legal materials",
+    },
+    {
+        "name": "EU AI Act Governance and Enforcement",
+        "url": "https://digital-strategy.ec.europa.eu/en/policies/ai-act-governance-and-enforcement",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Регулятор",
+        "description": "European Commission page on AI Act governance, enforcement, AI Office and competent authorities",
+        "date": "2026-06-01",
+    },
+    {
+        "name": "EU AI Act Service Desk",
+        "url": "https://digital-strategy.ec.europa.eu/en/news/commission-launches-ai-act-service-desk-and-single-information-platform-support-ai-act",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Регулятор",
+        "description": "European Commission launch of the AI Act Service Desk and Single Information Platform",
+        "date": "2025-10-08",
+    },
+    {
+        "name": "EU AI Act Guidelines",
+        "url": "https://digital-strategy.ec.europa.eu/en/news/supporting-implementation-ai-act-clear-guidelines",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Руководства",
+        "description": "European Commission guidelines for practical implementation of the AI Act",
+        "date": "2025-12-04",
+    },
+    {
+        "name": "EU AI-Generated Content Code",
+        "url": "https://digital-strategy.ec.europa.eu/en/news/commission-launches-work-code-practice-marking-and-labelling-ai-generated-content",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Руководства",
+        "description": "European Commission work on code of practice for marking and labelling AI-generated content under the AI Act",
+        "date": "2025-11-05",
+    },
+    {
+        "name": "EU AI Pact Progress",
+        "url": "https://digital-strategy.ec.europa.eu/en/news/ai-pact-marks-one-year-progress-trustworthy-ai-europe",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Регулятор",
+        "description": "European Commission update on AI Pact and preparation for AI Act compliance",
+        "date": "2025-12-15",
+    },
+    {
+        "name": "EU GPAI Safety Tender",
+        "url": "https://digital-strategy.ec.europa.eu/en/funding/eu-ai-office-launches-eu9-million-tender-technical-support-gpai-safety",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Регулятор",
+        "description": "EU AI Office tender for technical support on enforcement of GPAI systemic-risk obligations under the AI Act",
+        "date": "2025-07-10",
+    },
+    {
+        "name": "ICO AI Innovation Response",
+        "url": "https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/2026/05/ico-response-to-government-on-safe-ai-powered-innovation/",
+        "country": "UK",
+        "flag": "🇬🇧",
+        "category": "Регулятор",
+        "description": "ICO response to UK Government on safe AI-powered innovation and regulatory certainty",
+        "date": "2026-05-29",
+    },
+    {
+        "name": "ICO AI and Biometrics Strategy",
+        "url": "https://ico.org.uk/about-the-ico/our-information/our-strategies-and-plans/artificial-intelligence-and-biometrics-strategy/what-we-have-achieved-so-far-on-ai-and-biometrics/",
+        "country": "UK",
+        "flag": "🇬🇧",
+        "category": "Регулятор",
+        "description": "ICO AI and biometrics strategy: supervision, guidance and data protection law for AI",
+        "date": "2025-06-05",
+    },
+    {
+        "name": "UNESCO Artificial Intelligence",
+        "url": "https://www.unesco.org/en/artificial-intelligence",
+        "country": "UNESCO",
+        "flag": "🌐",
+        "category": "Международные стандарты",
+        "description": "UNESCO official AI page covering AI ethics, policy and international governance materials",
+    },
     {
         "name": "Canada AI Portal",
         "url": "https://www.canada.ca/en/services/science/innovation/artificial-intelligence.html",
@@ -1570,6 +1486,7 @@ OFFICIAL_PAGE_SOURCES = [
         "flag": "🇸🇬",
         "category": "Руководства",
         "description": "Model AI Governance Framework for Agentic AI",
+        "date": "2026-01-22",
     },
     {
         "name": "Singapore AI Governance Framework",
@@ -1586,6 +1503,7 @@ OFFICIAL_PAGE_SOURCES = [
         "flag": "🇯🇵",
         "category": "Госуправление",
         "description": "Cabinet Office Japan: AI Act materials, legal text and official AI policy documents",
+        "date": "2025-06-04",
     },
     {
         "name": "South Korea AI Basic Act",
@@ -1594,6 +1512,7 @@ OFFICIAL_PAGE_SOURCES = [
         "flag": "🇰🇷",
         "category": "Законодательство",
         "description": "Official Korea.net policy news on AI Basic Act",
+        "date": "2026-01-22",
     },
     {
         "name": "Brazil AI Bill",
@@ -1602,6 +1521,7 @@ OFFICIAL_PAGE_SOURCES = [
         "flag": "🇧🇷",
         "category": "Законопроекты",
         "description": "Brazil Senate advances discussions on bill to regulate AI use",
+        "date": "2025-05-23",
     },
 ]
 
@@ -1754,7 +1674,11 @@ def scrape_html_search_source(source: dict) -> list[dict]:
             articles.append(attach_analysis(article, title, relevance_text))
     except Exception as e:
         had_error = True
-        if isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
+        if isinstance(e, requests.exceptions.HTTPError) and getattr(e.response, "status_code", None) in (403, 404, 410):
+            status_code = e.response.status_code
+            logger.warning(f"[{source['name']}] HTML-страница недоступна (HTTP {status_code}): {source['url']}")
+            update_source_diagnostic(source["name"], status="unavailable", message=f"HTTP {status_code}: page is unavailable or blocks server requests")
+        elif isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
             logger.warning(f"[{source['name']}] Страница не ответила за отведенное время, пропуск: {source['url']}")
             update_source_diagnostic(source["name"], status="timeout", message="request timeout")
         else:
@@ -1795,9 +1719,19 @@ def scrape_official_page(source: dict) -> list[dict]:
 
         title_tag = soup.select_one("h1") or soup.select_one("title")
         title = clean_html(title_tag.get_text(" ")) if title_tag else source["name"]
-        page_text = clean_html(" ".join(p.get_text(" ") for p in soup.select("p, time, .date, .field--name-created, .gc-byline")))
-        relevance_text = page_text
+        content_nodes = soup.select(
+            "main, article, .content, .field, .field__item, p, li, time, "
+            ".date, .field--name-created, .gc-byline"
+        )
+        page_text = clean_html(" ".join(node.get_text(" ") for node in content_nodes))
+        if len(page_text) < 240:
+            page_text = clean_html(soup.get_text(" "))
+        relevance_text = f"{page_text} {source['description']}"
         date = parse_date_text(page_text, title, source["url"], source["description"])
+        if source.get("date"):
+            fallback_date = parse_date_text(source["date"])
+            if not is_unknown_date(fallback_date):
+                date = fallback_date
 
         if not has_primary_ai_signal(title, page_text):
             update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="no primary AI signal")
@@ -1843,7 +1777,11 @@ def scrape_official_page(source: dict) -> list[dict]:
         )
         return result
     except Exception as e:
-        if isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
+        if isinstance(e, requests.exceptions.HTTPError) and getattr(e.response, "status_code", None) in (403, 404, 410):
+            status_code = e.response.status_code
+            logger.warning(f"[{source['name']}] Официальная страница недоступна (HTTP {status_code}): {source['url']}")
+            update_source_diagnostic(source["name"], status="unavailable", message=f"HTTP {status_code}: page is unavailable or blocks server requests")
+        elif isinstance(e, (requests.Timeout, requests.exceptions.ReadTimeout)):
             logger.warning(f"[{source['name']}] Страница не ответила за отведенное время, пропуск: {source['url']}")
             update_source_diagnostic(source["name"], status="timeout", message="request timeout")
         else:
@@ -1877,9 +1815,9 @@ def fetch_all_articles(include_diagnostics: bool = False):
     try:
         rss_futures = {pool.submit(fetch_rss, src): src["name"] for src in RSS_SOURCES}
         scraper_futures = {
-            pool.submit(scrape_eurlex_ai): "EUR-Lex (прямой)",
-            pool.submit(scrape_congress_ai): "Congress.gov",
-            pool.submit(scrape_federal_register_ai): "Federal Register API",
+            pool.submit(scrape_eurlex_ai): "EUR-Lex (прямой поиск)",
+            pool.submit(scrape_congress_ai): "US Congress (прямой поиск)",
+            pool.submit(scrape_federal_register_ai): "Federal Register (официальный API)",
         }
         scraper_futures.update({
             pool.submit(scrape_html_search_source, src): src["name"]
@@ -1898,7 +1836,9 @@ def fetch_all_articles(include_diagnostics: bool = False):
                 try:
                     result = future.result(timeout=1)
                     all_articles.extend(result)
-                    if final_source_status(name) == "ok":
+                    current_diag = SOURCE_DIAGNOSTICS.get(name, {})
+                    current_message = current_diag.get("message", "")
+                    if final_source_status(name) == "ok" and current_message in {"", "waiting", "running"}:
                         update_source_diagnostic(
                             name,
                             status="ok",
@@ -1923,13 +1863,19 @@ def fetch_all_articles(include_diagnostics: bool = False):
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 
-    # Дедубликация по ссылке
+    # Дедубликация по нормализованной ссылке и заголовку.
     seen_links = set()
+    seen_titles = set()
     unique = []
     for a in all_articles:
-        if a["link"] not in seen_links:
-            seen_links.add(a["link"])
-            unique.append(a)
+        link_key = canonical_url(a.get("link", ""))
+        title_key = article_title_key(a.get("title", ""))
+        if not link_key or link_key in seen_links or (title_key and title_key in seen_titles):
+            continue
+        seen_links.add(link_key)
+        if title_key:
+            seen_titles.add(title_key)
+        unique.append(a)
 
     # Сортировка по реальной дате материала: сначала самые новые и актуальные.
     unique.sort(

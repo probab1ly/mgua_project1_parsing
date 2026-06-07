@@ -5,15 +5,19 @@ import webbrowser
 import hashlib
 import hmac
 import os
+import ssl
 import smtplib
 import time
+import urllib.parse
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from functools import wraps
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from flask_cors import CORS
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill, Side, Border
 
 from scraper import (
     fetch_all_articles,
@@ -32,7 +36,7 @@ from scraper import (
     to_datetime,
 )
 
-
+# yldp rxco fwzj kshz
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -43,6 +47,8 @@ CORS(app)
 CACHE_FILE = Path("cache.json")
 USERS_FILE = Path("users.json")
 EMAIL_CONFIG_FILE = Path("email_config.json")
+HISTORY_DIR = Path("update_history")
+HISTORY_INDEX_FILE = HISTORY_DIR / "history.json"
 CACHE_VERSION = 12
 CACHE_LOCK = threading.Lock()
 WEEKLY_REFRESH_INTERVAL_SECONDS = 7 * 24 * 60 * 60
@@ -129,6 +135,48 @@ def article_counts(articles: list[dict]) -> dict:
     }
 
 
+def read_history_index() -> list[dict]:
+    if not HISTORY_INDEX_FILE.exists():
+        return []
+    try:
+        data = json.loads(HISTORY_INDEX_FILE.read_text(encoding="utf-8"))
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        logger.error(f"Ошибка чтения истории обновлений: {e}")
+        return []
+
+
+def write_history_index(history: list[dict]) -> None:
+    HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    HISTORY_INDEX_FILE.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def email_status_payload() -> dict:
+    config = load_email_config()
+    recipients = [r for r in config.get("recipients", []) if r]
+    host = config.get("smtp_host") or os.environ.get("AI_MONITOR_SMTP_HOST")
+    username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
+    sender = config.get("from_email") or username
+    password = config.get("smtp_password") or os.environ.get("AI_MONITOR_SMTP_PASSWORD")
+    return {
+        "enabled": bool(config.get("enabled")),
+        "recipients": recipients,
+        "recipients_count": len(recipients),
+        "smtp_host_set": bool(host),
+        "from_email_set": bool(sender),
+        "smtp_username_set": bool(username),
+        "smtp_password_set": bool(password),
+        "ready": bool(config.get("enabled") and recipients and host and sender and username and password),
+    }
+
+
+def config_bool(config: dict, key: str, default: bool = False) -> bool:
+    value = config.get(key, default)
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+
 def load_email_config() -> dict:
     if not EMAIL_CONFIG_FILE.exists():
         return {"enabled": False, "recipients": []}
@@ -153,7 +201,9 @@ def send_email_notification(subject: str, body: str) -> bool:
     username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
     password = config.get("smtp_password") or os.environ.get("AI_MONITOR_SMTP_PASSWORD")
     sender = config.get("from_email") or username
-    use_tls = bool(config.get("use_tls", True))
+    use_tls = config_bool(config, "use_tls", True)
+    use_ssl = config_bool(config, "use_ssl", False) or config_bool(config, "smtp_ssl", False)
+    timeout = int(config.get("timeout") or os.environ.get("AI_MONITOR_SMTP_TIMEOUT", "45"))
     if not host or not sender:
         logger.warning("Email не отправлен: не указан SMTP host/from_email")
         return False
@@ -165,9 +215,16 @@ def send_email_notification(subject: str, body: str) -> bool:
     msg.set_content(body)
 
     try:
-        with smtplib.SMTP(host, port, timeout=20) as smtp:
-            if use_tls:
-                smtp.starttls()
+        context = ssl.create_default_context()
+        if use_ssl:
+            smtp_server = smtplib.SMTP_SSL(host, port, timeout=timeout, context=context)
+        else:
+            smtp_server = smtplib.SMTP(host, port, timeout=timeout)
+        with smtp_server as smtp:
+            smtp.ehlo()
+            if use_tls and not use_ssl:
+                smtp.starttls(context=context)
+                smtp.ehlo()
             if username and password:
                 smtp.login(username, password)
             smtp.send_message(msg)
@@ -177,12 +234,50 @@ def send_email_notification(subject: str, body: str) -> bool:
         return False
 
 
-def notify_about_new_articles(previous_links: set[str], articles: list[dict]) -> None:
-    new_articles = [a for a in articles if a.get("link") and a.get("link") not in previous_links]
-    if not new_articles:
-        return
-    lines = ["Новые материалы по ИИ и правовому регулированию:", ""]
-    for article in new_articles[:25]:
+def normalize_article_link(link: str) -> str:
+    if not link:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(link.strip())
+        query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        ignored = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
+        if parsed.netloc.lower() == "eur-lex.europa.eu":
+            ignored.update({"qid", "rid"})
+        query = [(k, v) for k, v in query if k.lower() not in ignored]
+        return urllib.parse.urlunparse((
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            parsed.path.rstrip("/"),
+            "",
+            urllib.parse.urlencode(query),
+            "",
+        ))
+    except Exception:
+        return link.strip()
+
+
+def diagnostic_brief(diagnostics: list[dict]) -> list[str]:
+    if not diagnostics:
+        return ["Диагностика источников: нет данных."]
+    failed = [d for d in diagnostics if d.get("status") in {"failed", "timeout", "error"}]
+    unavailable = [d for d in diagnostics if d.get("status") == "unavailable"]
+    accepted = [d for d in diagnostics if int(d.get("accepted_count") or 0) > 0]
+    lines = [
+        (
+            f"Источники: проверено {len(diagnostics)}, дали материалы {len(accepted)}, "
+            f"с ошибками/таймаутами {len(failed)}, недоступных/заблокированных {len(unavailable)}."
+        ),
+    ]
+    for item in failed[:8]:
+        lines.append(f"- {item.get('name', 'source')}: {item.get('status')} — {item.get('message', '')}")
+    if unavailable:
+        lines.append("Недоступные источники обычно означают 403/404, отключенный RSS или блокировку серверных запросов.")
+    return lines
+
+
+def article_email_lines(articles: list[dict]) -> list[str]:
+    lines: list[str] = []
+    for article in articles[:25]:
         mode = "строгий режим" if article.get("strict_match") else "расширенный режим"
         lines.extend([
             f"[{mode}] {article.get('title', 'Без заголовка')}",
@@ -190,10 +285,231 @@ def notify_about_new_articles(previous_links: set[str], articles: list[dict]) ->
             f"URL: {article.get('link', '')}",
             "",
         ])
-    send_email_notification("AI Regulation Monitor: новые материалы", "\n".join(lines))
+    return lines
 
 
-def save_cache(articles: list, diagnostics: list | None = None) -> None:
+def notify_about_refresh(previous_links: set[str], articles: list[dict], diagnostics: list[dict] | None = None) -> None:
+    diagnostics = diagnostics or []
+    new_articles = [
+        a for a in articles
+        if a.get("link") and normalize_article_link(a.get("link", "")) not in previous_links
+    ]
+
+    if new_articles:
+        lines = [
+            "Еженедельная проверка выполнена.",
+            f"Новых материалов: {len(new_articles)}.",
+            "",
+            "Новые материалы по ИИ и правовому регулированию:",
+            "",
+        ]
+        lines.extend(article_email_lines(new_articles))
+        lines.extend(["", *diagnostic_brief(diagnostics)])
+        send_email_notification("AI Regulation Monitor: новые материалы", "\n".join(lines))
+        return
+
+    lines = [
+        "Еженедельная проверка выполнена.",
+        "Новых материалов по ИИ и правовому регулированию не найдено.",
+        f"Всего актуальных материалов в базе: {len(articles)}.",
+        "",
+        *diagnostic_brief(diagnostics),
+    ]
+    send_email_notification("AI Regulation Monitor: новых материалов нет", "\n".join(lines))
+
+
+def notify_about_new_articles(previous_links: set[str], articles: list[dict]) -> None:
+    notify_about_refresh(previous_links, articles, [])
+
+
+def human_status(status: str) -> str:
+    labels = {
+        "ok": "Успешно",
+        "no-records": "Нет релевантных записей",
+        "unavailable": "Недоступен",
+        "pending": "Ожидает",
+        "running": "В работе",
+        "timeout": "Таймаут",
+        "error": "Ошибка",
+        "failed": "Ошибка",
+    }
+    return labels.get(status or "", status or "Неизвестно")
+
+
+def auto_fit_sheet(sheet, widths: dict[int, int]) -> None:
+    for col_idx, width in widths.items():
+        sheet.column_dimensions[chr(64 + col_idx)].width = width
+    for row in sheet.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+
+def style_header(sheet) -> None:
+    fill = PatternFill("solid", fgColor="8B1A1A")
+    border = Border(bottom=Side(style="thin", color="D9D4CC"))
+    for cell in sheet[1]:
+        cell.fill = fill
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border = border
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
+
+
+def build_excel_report(articles: list[dict], diagnostics: list[dict], updated_at: str, file_path: Path) -> None:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Материалы"
+    headers = [
+        "№",
+        "Режим",
+        "Дата материала",
+        "Страна/регион",
+        "Категория",
+        "Тип правового события",
+        "Источник",
+        "Заголовок",
+        "Краткое описание",
+        "URL",
+        "NLP-метка",
+        "NLP уверенность",
+        "Причина отбора",
+    ]
+    ws.append(headers)
+    for index, article in enumerate(articles, start=1):
+        title = article.get("title", "")
+        summary = article.get("summary", "")
+        url = article.get("link", "")
+        row = [
+            index,
+            "Строгий режим" if article.get("strict_match") else "Расширенный режим",
+            article.get("date", ""),
+            article.get("country", ""),
+            article.get("category", ""),
+            legal_update_type(title, summary),
+            article.get("source", ""),
+            title,
+            summary,
+            url,
+            article.get("nlp_label") or article.get("filter_mode", ""),
+            article.get("nlp_confidence") or article.get("analysis_confidence", ""),
+            article.get("nlp_reason") or article.get("analysis_reason", ""),
+        ]
+        ws.append(row)
+        if url:
+            url_cell = ws.cell(row=index + 1, column=10)
+            url_cell.hyperlink = url
+            url_cell.style = "Hyperlink"
+    style_header(ws)
+    auto_fit_sheet(ws, {
+        1: 6, 2: 18, 3: 18, 4: 16, 5: 24, 6: 26, 7: 32,
+        8: 52, 9: 72, 10: 64, 11: 16, 12: 16, 13: 72,
+    })
+
+    ds = wb.create_sheet("Диагностика")
+    ds.append([
+        "Источник",
+        "Страна",
+        "Статус",
+        "Найдено",
+        "Принято",
+        "Строгих",
+        "Расширенных",
+        "Отклонено",
+        "Сообщение",
+        "URL",
+    ])
+    for item in diagnostics:
+        status = item.get("status", "")
+        ds.append([
+            item.get("name", ""),
+            item.get("country", ""),
+            human_status(status),
+            item.get("found_count", 0),
+            item.get("accepted_count", 0),
+            item.get("strict_count", 0),
+            item.get("monitoring_count", 0),
+            item.get("rejected_count", 0),
+            item.get("message", ""),
+            item.get("url", ""),
+        ])
+        url = item.get("url", "")
+        if url:
+            url_cell = ds.cell(row=ds.max_row, column=10)
+            url_cell.hyperlink = url
+            url_cell.style = "Hyperlink"
+    style_header(ds)
+    auto_fit_sheet(ds, {1: 36, 2: 16, 3: 20, 4: 12, 5: 12, 6: 12, 7: 16, 8: 12, 9: 72, 10: 64})
+
+    ss = wb.create_sheet("Сводка")
+    counts = article_counts(articles)
+    stats = get_stats(articles)
+    ok_sources = sum(1 for d in diagnostics if d.get("status") == "ok")
+    problem_sources = len(diagnostics) - ok_sources
+    summary_rows = [
+        ["Показатель", "Значение", "Комментарий"],
+        ["Время обновления", updated_at, "Фиксируется при завершении сбора данных"],
+        ["Всего материалов", counts["total"], "Строгий + расширенный режим"],
+        ["Строгий режим", counts["strict_total"], "Подтвержденные правовые акты, проекты, изменения, вступление в силу"],
+        ["Расширенный режим", counts["monitoring_total"], "Правовая повестка, планы, обсуждения и новости о регулировании ИИ"],
+        ["Источников в конфигурации", len(ALL_SOURCES), "Официальные и профильные источники"],
+        ["Источников без ошибок", ok_sources, ""],
+        ["Источников с предупреждениями/ошибками", problem_sources, ""],
+    ]
+    for row in summary_rows:
+        ss.append(row)
+    ss.append([])
+    ss.append(["Страна/регион", "Материалов", ""])
+    for country, value in stats.get("countries", {}).items():
+        ss.append([country, value, ""])
+    ss.append([])
+    ss.append(["Категория", "Материалов", ""])
+    for category, value in stats.get("categories", {}).items():
+        ss.append([category, value, ""])
+    style_header(ss)
+    for row_idx in (10 + len(stats.get("countries", {})) + 1,):
+        for cell in ss[row_idx]:
+            cell.font = Font(bold=True, color="8B1A1A")
+    auto_fit_sheet(ss, {1: 32, 2: 24, 3: 76})
+
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(file_path)
+
+
+def save_update_history(articles: list[dict], diagnostics: list[dict], auto_refresh: bool = False) -> dict | None:
+    try:
+        HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+        created_at = datetime.now(timezone.utc).isoformat()
+        record_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
+        filename = f"update_{record_id}.xlsx"
+        file_path = HISTORY_DIR / filename
+        build_excel_report(articles, diagnostics, created_at, file_path)
+        counts = article_counts(articles)
+        ok_sources = sum(1 for d in diagnostics if d.get("status") == "ok")
+        record = {
+            "id": record_id,
+            "created_at": created_at,
+            "total": counts["total"],
+            "strict_total": counts["strict_total"],
+            "monitoring_total": counts["monitoring_total"],
+            "sources_count": len(ALL_SOURCES),
+            "diagnostics_total": len(diagnostics),
+            "ok_sources": ok_sources,
+            "problem_sources": max(0, len(diagnostics) - ok_sources),
+            "excel_file": filename,
+            "auto_refresh": auto_refresh,
+        }
+        history = [item for item in read_history_index() if item.get("id") != record_id]
+        history.insert(0, record)
+        write_history_index(history[:100])
+        logger.info(f"Отчёт обновления сохранён: {file_path}")
+        return record
+    except Exception as e:
+        logger.error(f"Ошибка сохранения истории обновлений: {e}")
+        return None
+
+
+def save_cache(articles: list, diagnostics: list | None = None, last_auto_refresh: str | None = None) -> None:
     payload = {
         "cache_version": CACHE_VERSION,
         "articles": articles,
@@ -201,6 +517,7 @@ def save_cache(articles: list, diagnostics: list | None = None) -> None:
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "sources_count": len(ALL_SOURCES),
         "diagnostics": diagnostics or [],
+        "last_auto_refresh": last_auto_refresh or _cache.get("last_auto_refresh"),
     }
     with CACHE_LOCK:
         _cache.update(payload)
@@ -285,17 +602,23 @@ def refresh_articles(send_notifications: bool = False, auto_refresh: bool = Fals
     logger.info("▶ Начало обновления данных...")
     with CACHE_LOCK:
         _cache["loading"] = True
-        previous_links = {a.get("link") for a in _cache.get("articles", []) if a.get("link")}
+        previous_links = {
+            normalize_article_link(a.get("link", ""))
+            for a in _cache.get("articles", [])
+            if a.get("link")
+        }
     try:
         result = fetch_all_articles(include_diagnostics=True)
         articles = result.get("articles", []) if isinstance(result, dict) else result
         diagnostics = result.get("diagnostics", []) if isinstance(result, dict) else []
-        save_cache(articles, diagnostics)
+        refresh_time = datetime.now(timezone.utc).isoformat() if auto_refresh else _cache.get("last_auto_refresh")
+        save_cache(articles, diagnostics, last_auto_refresh=refresh_time)
+        save_update_history(articles, diagnostics, auto_refresh=auto_refresh)
         if auto_refresh:
             with CACHE_LOCK:
-                _cache["last_auto_refresh"] = datetime.now(timezone.utc).isoformat()
+                _cache["last_auto_refresh"] = refresh_time
         if send_notifications:
-            notify_about_new_articles(previous_links, articles)
+            notify_about_refresh(previous_links, articles, diagnostics)
         logger.info(f"✅ Обновление завершено: {len(articles)} статей")
     except Exception as e:
         logger.error(f"Ошибка при обновлении: {e}")
@@ -424,15 +747,23 @@ def api_stats():
         counts = article_counts(all_articles)
         articles = split_articles_by_mode(all_articles, mode)
         stats = get_stats(articles)
+        all_stats = get_stats(all_articles)
         countries = dict(stats.get("countries", {}))
         categories = dict(stats.get("categories", {}))
+        all_countries = dict(all_stats.get("countries", {}))
+        all_categories = dict(all_stats.get("categories", {}))
         for source in ALL_SOURCES:
             countries.setdefault(source["country"], 0)
             categories.setdefault(source["category"], 0)
+            all_countries.setdefault(source["country"], 0)
+            all_categories.setdefault(source["category"], 0)
         stats["countries"] = dict(sorted(countries.items(), key=lambda x: (-x[1], x[0])))
         stats["categories"] = dict(sorted(categories.items(), key=lambda x: (-x[1], x[0])))
+        all_stats["countries"] = dict(sorted(all_countries.items(), key=lambda x: (-x[1], x[0])))
+        all_stats["categories"] = dict(sorted(all_categories.items(), key=lambda x: (-x[1], x[0])))
         return jsonify({
             "stats": stats,
+            "all_stats": all_stats,
             "total_all": counts["total"],
             "strict_total": counts["strict_total"],
             "monitoring_total": counts["monitoring_total"],
@@ -444,8 +775,13 @@ def api_stats():
 @app.route("/api/diagnostics")
 @login_required
 def api_diagnostics():
+    source_names = {source["name"] for source in ALL_SOURCES}
     with CACHE_LOCK:
-        diagnostics = list(_cache.get("diagnostics", []))
+        diagnostics = [
+            dict(item)
+            for item in _cache.get("diagnostics", [])
+            if item.get("name") in source_names
+        ]
     if not diagnostics:
         diagnostics = [
             {
@@ -461,7 +797,16 @@ def api_diagnostics():
             }
             for s in ALL_SOURCES
         ]
-    diagnostics.sort(key=lambda item: (item.get("status") == "ok", -int(item.get("accepted_count", 0)), item.get("name", "")))
+    for item in diagnostics:
+        message = item.get("message", "")
+        if item.get("status") == "failed" and any(token in message for token in ("HTTP 403", "HTTP 404", "HTTP 410", "Forbidden", "Not Found", "empty or broken feed")):
+            item["status"] = "unavailable"
+    status_rank = {"ok": 0, "no-records": 1, "unavailable": 2, "pending": 3, "running": 4, "timeout": 5, "error": 6, "failed": 7}
+    diagnostics.sort(key=lambda item: (
+        status_rank.get(item.get("status", "ok"), 8),
+        -int(item.get("accepted_count", 0)),
+        item.get("name", ""),
+    ))
     return jsonify({"diagnostics": diagnostics})
 
 
@@ -489,8 +834,37 @@ def api_refresh():
         if _cache.get("loading"):
             return jsonify({"status": "already_loading"}), 200
         _cache["loading"] = True
-    background_refresh()
+    background_refresh(send_notifications=True)
     return jsonify({"status": "started"})
+
+
+@app.route("/api/history")
+@login_required
+def api_history():
+    history = read_history_index()
+    return jsonify({"history": history})
+
+
+@app.route("/api/history/<record_id>/download")
+@login_required
+def api_history_download(record_id: str):
+    history = read_history_index()
+    record = next((item for item in history if item.get("id") == record_id), None)
+    if not record:
+        return jsonify({"error": "history_record_not_found"}), 404
+    filename = record.get("excel_file", "")
+    if not filename or "/" in filename or "\\" in filename:
+        return jsonify({"error": "invalid_report_file"}), 400
+    file_path = HISTORY_DIR / filename
+    if not file_path.exists():
+        return jsonify({"error": "report_file_not_found"}), 404
+    return send_from_directory(str(HISTORY_DIR.resolve()), filename, as_attachment=True)
+
+
+@app.route("/api/email/status")
+@login_required
+def api_email_status():
+    return jsonify(email_status_payload())
 
 
 @app.route("/api/filters")

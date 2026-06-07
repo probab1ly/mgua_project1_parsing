@@ -88,10 +88,11 @@ main{max-width:1400px;margin:0 auto;padding:2rem}
 }
 .stat-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;font-weight:700}
 .stat-value{font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1}
+.stat-value.time-value{font-size:1.75rem;line-height:1;margin-top:0;letter-spacing:0;color:var(--accent)}
 
 /* ── CONTROLS ── */
 .controls{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center}
-.search-wrap{flex:1;min-width:220px;position:relative}
+.search-wrap{flex:1 1 380px;min-width:280px;position:relative}
 .search-wrap input{
   width:100%;background:var(--card);border:1px solid var(--border);
   color:var(--text);border-radius:10px;padding:.7rem 1rem .7rem 2.8rem;
@@ -101,12 +102,22 @@ main{max-width:1400px;margin:0 auto;padding:2rem}
 .search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139, 26, 26, 0.1)}
 .search-wrap .search-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--secondary);font-size:1rem;pointer-events:none}
 select{
-  background:var(--card);border:1px solid var(--border);color:var(--text);
-  border-radius:10px;padding:.7rem 1.2rem;font-size:.9rem;
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background-color:var(--card);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 1.2rem center;
+  background-size:16px 16px;
+  border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:.7rem 3.25rem .7rem 1.2rem;font-size:.9rem;
   outline:none;cursor:pointer;font-family:inherit;transition:all .2s;
-  box-shadow:var(--shadow);
+  box-shadow:var(--shadow);min-width:260px;max-width:100%;
 }
 select:focus{border-color:var(--accent)}
+@media(max-width:700px){
+  .search-wrap{flex-basis:100%;min-width:100%}
+  select{flex:1 1 100%;min-width:100%}
+}
 .filter-tag{
   background:var(--bg-dark);border:1px solid var(--border);
   color:var(--text-muted);border-radius:8px;padding:.4rem 1rem;
@@ -133,6 +144,22 @@ select:focus{border-color:var(--accent)}
 .mode-btn:focus{outline:none}
 .mode-btn:focus-visible{box-shadow:0 0 0 3px rgba(139,26,26,.16),0 8px 18px rgba(139,26,26,.14)}
 .mode-note{font-size:.78rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.45}
+.view-switch{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1rem}
+.view-btn{
+  background:var(--bg-dark);
+  border:1px solid var(--border);
+  color:var(--text-muted);
+  border-radius:8px;
+  padding:.6rem 1rem;
+  font-size:.82rem;
+  font-weight:800;
+  cursor:pointer;
+  outline:none;
+  transition:background-color .24s ease,color .24s ease,border-color .24s ease,box-shadow .24s ease,transform .24s ease;
+}
+.view-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 18px rgba(139,26,26,.18)}
+.view-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);box-shadow:0 8px 18px rgba(139,26,26,.12)}
+.view-btn.active:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:#fff}
 #mode-counts{
   display:flex;
   flex-wrap:wrap;
@@ -209,6 +236,23 @@ select:focus{border-color:var(--accent)}
 .page-btn:hover,.page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .page-btn:disabled{opacity:.3;cursor:not-allowed}
 
+/* ── HISTORY ── */
+.history-view{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--shadow)}
+.history-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.history-title{font-size:1rem;font-weight:900;color:var(--text);display:flex;align-items:center;gap:.5rem}
+.history-subtitle{font-size:.8rem;color:var(--text-muted);line-height:1.45;margin-top:.35rem}
+.history-list{display:flex;flex-direction:column;gap:.85rem}
+.history-item{border:1px solid var(--border);border-radius:12px;padding:1rem;background:#fff;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;transition:border-color .24s ease,box-shadow .24s ease,transform .24s ease}
+.history-item:hover{border-color:rgba(139,26,26,.35);box-shadow:0 10px 24px rgba(0,0,0,.08);transform:translateY(-1px)}
+.history-date{font-weight:900;color:var(--accent);font-size:1rem;margin-bottom:.5rem}
+.history-meta{display:flex;flex-wrap:wrap;gap:.45rem}
+.history-pill{display:inline-flex;align-items:center;gap:.25rem;border:1px solid var(--border);background:var(--bg-dark);border-radius:8px;padding:.35rem .55rem;font-size:.76rem;color:var(--text-muted);font-weight:700}
+.history-pill strong{color:var(--accent)}
+.history-download{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--accent);background:var(--accent);color:#fff;text-decoration:none;border-radius:8px;padding:.65rem .9rem;font-size:.8rem;font-weight:900;white-space:nowrap;transition:background-color .24s ease,box-shadow .24s ease,transform .24s ease}
+.history-download:hover{background:#741515;box-shadow:0 8px 18px rgba(139,26,26,.2);transform:translateY(-1px)}
+.email-warning{border:1px solid rgba(139,26,26,.18);background:#fff7f7;color:var(--accent);border-radius:12px;padding:.85rem 1rem;font-size:.82rem;font-weight:700;margin-bottom:1rem;line-height:1.45}
+@media(max-width:720px){.history-item{grid-template-columns:1fr}.history-download{width:100%}}
+
 /* ── SIDEBAR ── */
 .layout{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start}
 @media(max-width:900px){.layout{grid-template-columns:1fr}}
@@ -242,6 +286,8 @@ select:focus{border-color:var(--accent)}
 .diagnostic-message{line-height:1.45;margin-top:.4rem;padding-top:.4rem;border-top:1px solid var(--border);overflow-wrap:anywhere;word-break:break-word;color:var(--text-muted)}
 .diagnostic-status.ok{background:rgba(16,185,129,.12);color:#047857}
 .diagnostic-status.timeout,.diagnostic-status.error,.diagnostic-status.failed{background:rgba(139,26,26,.12);color:var(--accent)}
+.diagnostic-status.unavailable{background:rgba(113,113,122,.12);color:var(--secondary)}
+.diagnostic-status.no-records{background:rgba(14,116,144,.1);color:#0e7490}
 .diagnostic-status.pending,.diagnostic-status.running{background:rgba(245,158,11,.14);color:#92400e}
 
 /* ── EMPTY / LOADING ── */
@@ -275,7 +321,7 @@ footer{text-align:center;padding:2rem;color:var(--text-muted);font-size:.75rem;b
       <img src="/static/logo.png" alt="МГЮА" class="logo-img">
       <div class="logo-text">
         <h1>AI Regulation Monitor</h1>
-        <span>Отдел медиабезопасности МГЮА</span>
+        <span>Отдел информационной и медиабезопасности МГЮА</span>
       </div>
     </a>
     <div class="header-actions">
@@ -315,7 +361,7 @@ footer{text-align:center;padding:2rem;color:var(--text-muted);font-size:.75rem;b
     </div>
     <div class="stat-card">
       <div class="stat-label">Последнее обновление</div>
-      <div class="stat-value" style="font-size:1rem;margin-top:.25rem" id="stat-updated">—</div>
+      <div class="stat-value time-value" id="stat-updated">—</div>
     </div>
   </div>
 
@@ -336,51 +382,71 @@ footer{text-align:center;padding:2rem;color:var(--text-muted);font-size:.75rem;b
     <span style="font-size:.75rem;color:var(--text-muted)">Быстрые фильтры:</span>
   </div>
 
-  <div class="mode-switch">
-    <button class="mode-btn active" id="mode-strict" onclick="setMode('strict')">Строгий режим</button>
-    <button class="mode-btn" id="mode-monitoring" onclick="setMode('monitoring')">Расширенный режим</button>
+  <div class="view-switch">
+    <button class="view-btn active" id="view-materials-btn" onclick="setView('materials')">Материалы</button>
+    <button class="view-btn" id="view-history-btn" onclick="setView('history')">История обновлений</button>
   </div>
-  <div class="mode-note" id="mode-note">
-    Строгий режим: принятие, публикация, внесение, вступление в силу или изменение правовых актов об ИИ.
-  </div>
-  <div class="mode-note" id="mode-counts">Всего: 0 · строгий режим: 0 · расширенный режим: 0 · текущий блок: 0</div>
 
-  <div class="layout">
-    <!-- Articles -->
-    <div>
-      <div class="section-header">
-        <div class="section-title">
-          📰 Новости и нормативные акты
-          <span class="count-badge" id="result-count">0</span>
+  <div id="materials-view">
+    <div class="mode-switch">
+      <button class="mode-btn active" id="mode-strict" onclick="setMode('strict')">Строгий режим</button>
+      <button class="mode-btn" id="mode-monitoring" onclick="setMode('monitoring')">Расширенный режим</button>
+    </div>
+    <div class="mode-note" id="mode-note">
+      Строгий режим: принятие, публикация, внесение, вступление в силу или изменение правовых актов об ИИ.
+    </div>
+    <div class="mode-note" id="mode-counts">Всего: 0 · строгий режим: 0 · расширенный режим: 0 · текущий блок: 0</div>
+
+    <div class="layout">
+      <!-- Articles -->
+      <div>
+        <div class="section-header">
+          <div class="section-title">
+            📰 Новости и нормативные акты
+            <span class="count-badge" id="result-count">0</span>
+          </div>
+        </div>
+        <div id="articles-container">
+          <div class="loader"><div class="spinner"></div><span>Загрузка данных из источников...</span></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="side-card">
+          <div class="side-title">🗺️ По регионам</div>
+          <div class="country-bar" id="country-chart"></div>
+        </div>
+        <div class="side-card">
+          <div class="side-title">📡 Источники</div>
+          <div class="source-list" id="source-list"></div>
+        </div>
+        <div class="side-card">
+          <div class="side-title">🧭 Диагностика</div>
+          <div class="diagnostics-list" id="diagnostics-list"></div>
         </div>
       </div>
-      <div id="articles-container">
-        <div class="loader"><div class="spinner"></div><span>Загрузка данных из источников...</span></div>
-      </div>
-      <div class="pagination" id="pagination"></div>
     </div>
+  </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="side-card">
-        <div class="side-title">🗺️ По регионам</div>
-        <div class="country-bar" id="country-chart"></div>
+  <div class="history-view" id="history-view" hidden>
+    <div class="history-header">
+      <div>
+        <div class="history-title">📁 История обновлений</div>
+        <div class="history-subtitle">Каждое завершённое обновление сохраняется отдельным Excel-отчётом с материалами, диагностикой источников и сводкой.</div>
       </div>
-      <div class="side-card">
-        <div class="side-title">📡 Источники</div>
-        <div class="source-list" id="source-list"></div>
-      </div>
-      <div class="side-card">
-        <div class="side-title">🧭 Диагностика</div>
-        <div class="diagnostics-list" id="diagnostics-list"></div>
-      </div>
+    </div>
+    <div class="email-warning" id="email-warning" hidden></div>
+    <div class="history-list" id="history-list">
+      <div class="loader"><div class="spinner"></div><span>Загрузка истории...</span></div>
     </div>
   </div>
 </main>
 
 <footer>
   МГЮА · Московский государственный юридический университет имени О.Е. Кутафина<br>
-  Отдел медиабезопасности · AI Regulation Monitor v1.0
+  Отдел информационной и медиабезопасности МГЮА · AI Regulation Monitor v1.0
 </footer>
 
 <div id="toast"></div>
@@ -390,6 +456,7 @@ const FLAGS = {EU:'🇪🇺',USA:'🇺🇸',UK:'🇬🇧',Canada:'🇨🇦',Aust
 let currentPage = 1, totalPages = 1, searchTimer = null;
 let currentFilter = {type: '', value: ''};
 let currentMode = 'strict';
+let currentView = 'materials';
 let refreshPollTimer = null;
 let refreshStartedAt = null;
 
@@ -406,6 +473,7 @@ async function fetchStatus() {
       badge.classList.add('loading');
       txt.textContent = 'Сбор данных...';
       setRefreshUi(true);
+      showRefreshLoading();
     } else {
       dot.className = 'dot';
       badge.classList.remove('loading');
@@ -414,8 +482,12 @@ async function fetchStatus() {
       if(!refreshPollTimer) setRefreshUi(false);
     }
     document.getElementById('stat-sources').textContent = d.sources_count || '—';
-    document.getElementById('stat-total').textContent = d.total || 0;
-    updateModeCounts(d.total || 0, d.strict_total || 0, d.monitoring_total || 0, null);
+    document.getElementById('stat-total').textContent = d.loading ? '...' : (d.total || 0);
+    if (d.loading) {
+      setCountsLoading();
+    } else {
+      updateModeCounts(d.total || 0, d.strict_total || 0, d.monitoring_total || 0, null);
+    }
     document.getElementById('stat-updated').textContent = d.last_updated
       ? new Date(d.last_updated).toLocaleTimeString('ru-RU') : '—';
     return d;
@@ -439,10 +511,12 @@ async function fetchStats() {
     const r = await fetch('/api/stats?mode=' + encodeURIComponent(currentMode));
     const d = await r.json();
     const s = d.stats || {};
+    const allStats = d.all_stats || {};
     updateModeCounts(d.total_all || 0, d.strict_total || 0, d.monitoring_total || 0, s.total || 0);
-    const countries = Object.keys(s.countries || {}).length;
+    const countryMap = allStats.countries || s.countries || {};
+    const countries = Object.values(countryMap).filter(v => Number(v) > 0).length;
     document.getElementById('stat-countries').textContent = countries || '—';
-    renderCountryChart(s.countries || {});
+    renderCountryChart(countryMap);
   } catch(e){}
 }
 
@@ -485,6 +559,28 @@ async function fetchDiagnostics() {
     const r = await fetch('/api/diagnostics');
     const d = await r.json();
     renderDiagnostics(d.diagnostics || []);
+  } catch(e){}
+}
+
+async function fetchHistory() {
+  const el = document.getElementById('history-list');
+  if(el) {
+    el.innerHTML = '<div class="loader"><div class="spinner"></div><span>Загрузка истории...</span></div>';
+  }
+  try {
+    const r = await fetch('/api/history');
+    const d = await r.json();
+    renderHistory(d.history || []);
+  } catch(e) {
+    if(el) el.innerHTML = '<div class="empty"><p>Не удалось загрузить историю обновлений</p></div>';
+  }
+}
+
+async function fetchEmailStatus() {
+  try {
+    const r = await fetch('/api/email/status');
+    const d = await r.json();
+    renderEmailStatus(d);
   } catch(e){}
 }
 
@@ -585,17 +681,94 @@ function updateModeCounts(total, strictTotal, monitoringTotal, currentTotal) {
   `;
 }
 
+function renderHistory(items) {
+  const el = document.getElementById('history-list');
+  if(!el) return;
+  if(!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><p>История появится после первого завершённого обновления данных</p></div>';
+    return;
+  }
+  el.innerHTML = items.map(item => {
+    const date = item.created_at ? new Date(item.created_at).toLocaleString('ru-RU') : '—';
+    const type = item.auto_refresh ? 'еженедельно' : 'вручную';
+    return `
+      <div class="history-item">
+        <div>
+          <div class="history-date">${escHtml(date)}</div>
+          <div class="history-meta">
+            <span class="history-pill">Тип: <strong>${escHtml(type)}</strong></span>
+            <span class="history-pill">Всего: <strong>${item.total || 0}</strong></span>
+            <span class="history-pill">Строгий: <strong>${item.strict_total || 0}</strong></span>
+            <span class="history-pill">Расширенный: <strong>${item.monitoring_total || 0}</strong></span>
+            <span class="history-pill">Источников: <strong>${item.sources_count || 0}</strong></span>
+            <span class="history-pill">Успешно: <strong>${item.ok_sources || 0}</strong></span>
+            <span class="history-pill">Проблемы: <strong>${item.problem_sources || 0}</strong></span>
+          </div>
+        </div>
+        <a class="history-download" href="/api/history/${encodeURIComponent(item.id)}/download">Скачать Excel</a>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderEmailStatus(status) {
+  const el = document.getElementById('email-warning');
+  if(!el) return;
+  if(status.ready) {
+    el.hidden = true;
+    el.textContent = '';
+    return;
+  }
+  const missing = [];
+  if(!status.enabled) missing.push('email-уведомления выключены');
+  if(!status.recipients_count) missing.push('нет адресов получателей');
+  if(!status.smtp_host_set) missing.push('не указан SMTP-сервер');
+  if(!status.from_email_set) missing.push('не указан адрес отправителя');
+  if(!status.smtp_password_set) missing.push('не указан пароль/токен SMTP');
+  el.hidden = false;
+  el.textContent = `Письма не отправляются: ${missing.join(', ')}. Получатели сейчас: ${(status.recipients || []).join(', ') || 'не указаны'}.`;
+}
+
+function setCountsLoading() {
+  document.getElementById('mode-counts').innerHTML = `
+    <span class="count-chip current">Идёт обновление <strong>...</strong></span>
+    <span class="count-chip">Проверяем источники</span>
+    <span class="count-chip">Итоги появятся после завершения</span>
+  `;
+  document.getElementById('result-count').textContent = '...';
+}
+
+function showRefreshLoading(message='Обновление данных: проверяем официальные источники, ленты и правовые базы...') {
+  setCountsLoading();
+  currentPage = 1;
+  const container = document.getElementById('articles-container');
+  if(container) {
+    container.innerHTML = `<div class="loader"><div class="spinner"></div><span>${escHtml(message)}</span></div>`;
+  }
+  const pagination = document.getElementById('pagination');
+  if(pagination) pagination.innerHTML = '';
+}
+
 function renderDiagnostics(items) {
   const el = document.getElementById('diagnostics-list');
   if(!items.length) {
     el.innerHTML = '<div class="diagnostic-item">Диагностика появится после обновления данных.</div>';
     return;
   }
-  el.innerHTML = items.slice(0, 40).map(item => {
-    const status = item.status || 'ok';
+  const statusRank = {ok:0, 'no-records':1, unavailable:2, pending:3, running:4, timeout:5, error:6, failed:7};
+  const sortedItems = [...items].sort((a,b) => {
+    const aStatus = normalizedDiagnosticStatus(a);
+    const bStatus = normalizedDiagnosticStatus(b);
+    return (statusRank[aStatus] ?? 8) - (statusRank[bStatus] ?? 8)
+      || Number(b.accepted_count || 0) - Number(a.accepted_count || 0)
+      || String(a.name || '').localeCompare(String(b.name || ''), 'ru');
+  });
+  el.innerHTML = sortedItems.slice(0, 40).map(item => {
+    const status = normalizedDiagnosticStatus(item);
+    const rawMsg = item.message || '';
     const accepted = item.accepted_count || 0;
     const raw = item.raw_count || item.candidate_count || 0;
-    const msg = item.message || (accepted ? 'ok' : 'нет релевантных записей');
+    const msg = rawMsg || (accepted ? 'ok' : 'нет релевантных записей');
     return `
       <div class="diagnostic-item">
         <div class="diagnostic-top">
@@ -607,6 +780,18 @@ function renderDiagnostics(items) {
       </div>
     `;
   }).join('');
+}
+
+function normalizedDiagnosticStatus(item) {
+  let status = item.status || 'ok';
+  const rawMsg = item.message || '';
+  if(status === 'failed' && /(HTTP 403|HTTP 404|HTTP 410|empty or broken feed|Forbidden|Not Found)/i.test(rawMsg)) {
+    status = 'unavailable';
+  }
+  if(status === 'ok' && /no relevant|source returned no relevant/i.test(rawMsg)) {
+    status = 'no-records';
+  }
+  return status;
 }
 
 // ── ACTIONS ──────────────────────────────────
@@ -696,10 +881,29 @@ function quickFilter(country) {
   currentPage=1; loadPage(1);
 }
 
+async function setView(view) {
+  currentView = view;
+  const materials = document.getElementById('materials-view');
+  const history = document.getElementById('history-view');
+  document.getElementById('view-materials-btn').classList.toggle('active', view === 'materials');
+  document.getElementById('view-history-btn').classList.toggle('active', view === 'history');
+  materials.hidden = view !== 'materials';
+  history.hidden = view !== 'history';
+  if(view === 'history') {
+    await Promise.all([fetchHistory(), fetchEmailStatus()]);
+  } else {
+    await Promise.all([fetchStats(), loadPage(currentPage || 1)]);
+  }
+}
+
 async function triggerRefresh() {
   refreshStartedAt = Date.now();
   setRefreshUi(true);
-  document.getElementById('articles-container').innerHTML = `<div class="loader"><div class="spinner"></div><span>Обновление данных: проверяем официальные источники, ленты и правовые базы...</span></div>`;
+  showRefreshLoading();
+  if(currentView === 'history') {
+    const historyList = document.getElementById('history-list');
+    historyList.innerHTML = '<div class="loader"><div class="spinner"></div><span>Идёт обновление, новый Excel-отчёт появится после завершения...</span></div>';
+  }
   showToast('🔄 Запущен сбор данных из источников...');
   await fetch('/api/refresh', {method:'POST'});
   await pollUntilDone();
@@ -712,7 +916,7 @@ async function pollUntilDone() {
     if(s && !s.loading) {
       clearInterval(refreshPollTimer);
       refreshPollTimer = null;
-      await Promise.all([fetchStats(), loadPage(1), fetchFilters(), fetchDiagnostics()]);
+      await Promise.all([fetchStats(), loadPage(1), fetchFilters(), fetchDiagnostics(), fetchHistory(), fetchEmailStatus()]);
       refreshStartedAt = null;
       setRefreshUi(false);
       showToast('✅ Данные успешно обновлены!');
@@ -731,14 +935,13 @@ function showToast(msg) {
 async function init() {
   const status = await fetchStatus();
   await Promise.all([fetchSources(), fetchFilters(), fetchDiagnostics()]);
-  if(status && status.total > 0) {
-    await Promise.all([fetchStats(), loadPage(1)]);
-    if(status.loading) await pollUntilDone();
-  } else if(status && status.loading) {
-    refreshStartedAt = Date.now();
+  if(status && status.loading) {
+    refreshStartedAt = refreshStartedAt || Date.now();
     setRefreshUi(true);
-    document.getElementById('articles-container').innerHTML = `<div class="loader"><div class="spinner"></div><span>Первоначальный сбор данных — это может занять 1–2 минуты...</span></div>`;
+    showRefreshLoading('Сбор данных уже идет — результаты появятся после завершения проверки источников...');
     await pollUntilDone();
+  } else if(status && status.total > 0) {
+    await Promise.all([fetchStats(), loadPage(1)]);
   } else {
     loadPage(1);
   }

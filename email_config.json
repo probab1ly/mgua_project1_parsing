@@ -1,11 +1,14 @@
 {
-  "enabled": false,
-  "smtp_host": "",
+  "enabled": true,
+  "smtp_host": "smtp.gmail.com",
   "smtp_port": 587,
-  "smtp_username": "",
-  "smtp_password": "",
-  "from_email": "",
+  "smtp_username": "nikisindimon653@gmail.com",
+  "smtp_password": "yldp rxco fwzj kshz",
+  "from_email": "nikisindimon653@gmail.com",
   "use_tls": true,
+  "use_ssl": false,
+  "timeout": 90,
   "recipients": [
+    "nikisindimon653@gmail.com"
   ]
 }
