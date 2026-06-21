@@ -1,4 +1,5 @@
 import feedparser
+from ftfy import fix_text
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone, timedelta
@@ -10,6 +11,7 @@ import time
 import random
 import concurrent.futures
 import threading
+from difflib import SequenceMatcher
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import urllib.parse
@@ -17,8 +19,8 @@ import urllib.parse
 
 # Таймаут для каждого HTTP-запроса (секунды)
 REQUEST_TIMEOUT = 12
-SLOW_REQUEST_TIMEOUT = 24
-HTML_REQUEST_TIMEOUT = 10
+SLOW_REQUEST_TIMEOUT = 20
+HTML_REQUEST_TIMEOUT = 14
 SLOW_HOSTS = {
     "www.canada.ca",
     "www.industry.gov.au",
@@ -110,6 +112,27 @@ def summarize_article_modes(articles: list[dict]) -> dict:
     }
 
 
+def format_rejection_summary(raw_count: int, accepted_count: int, reasons: dict[str, int]) -> str:
+    if accepted_count:
+        return "ok"
+    labels = {
+        "invalid": "некорректная ссылка/заголовок",
+        "external": "ссылка вне разрешенного домена",
+        "no_ai": "нет явной темы ИИ",
+        "no_legal": "нет связки ИИ с правом",
+        "old_date": "дата вне периода мониторинга",
+        "unknown_date": "дата не определена",
+        "duplicate": "дубликат",
+    }
+    details = [
+        f"{labels.get(key, key)}: {value}"
+        for key, value in sorted(reasons.items(), key=lambda item: (-item[1], item[0]))
+        if value
+    ]
+    base = f"прочитано {raw_count}, релевантных материалов не найдено"
+    return f"{base}; " + "; ".join(details[:4]) if details else base
+
+
 def final_source_status(name: str) -> str:
     current = SOURCE_DIAGNOSTICS.get(name, {}).get("status")
     return current if current in {"failed", "timeout", "error", "unavailable"} else "ok"
@@ -157,11 +180,144 @@ def article_title_key(title: str) -> str:
     return text[:180]
 
 
+TITLE_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in",
+    "is", "it", "of", "on", "or", "that", "the", "this", "to", "with",
+    "new", "latest", "update", "news", "official", "press", "release",
+}
+
+
+def article_title_tokens(title: str) -> set[str]:
+    normalized = article_title_key(title)
+    tokens = set()
+    for token in normalized.split():
+        if len(token) <= 2 or token in TITLE_STOPWORDS:
+            continue
+        if token.endswith("ies") and len(token) > 5:
+            token = token[:-3] + "y"
+        elif token.endswith("ing") and len(token) > 6:
+            token = token[:-3]
+        elif token.endswith("ed") and len(token) > 5:
+            token = token[:-2]
+        elif token.endswith("es") and len(token) > 5:
+            token = token[:-2]
+        elif token.endswith("s") and len(token) > 4 and not token.endswith("ss"):
+            token = token[:-1]
+        tokens.add(token)
+    return tokens
+
+
+def document_identifiers(article: dict) -> set[str]:
+    text = f"{article.get('title', '')} {article.get('summary', '')}".lower()
+    patterns = [
+        r"\bcelex[:\s-]*[0-9a-z()]+\b",
+        r"\b(?:h\.?r\.?|s\.|bill)\s*\d{1,6}\b",
+        r"\b(?:regulation|directive|decision)\s*\(?(?:eu\s*)?\d{4}/\d+\b",
+        r"\b(?:act|law|decree|ordinance)\s*(?:no\.?\s*)?\d{1,6}\b",
+    ]
+    identifiers = set()
+    for pattern in patterns:
+        identifiers.update(re.findall(pattern, text, flags=re.IGNORECASE))
+    return {re.sub(r"\s+", "", value.lower()) for value in identifiers}
+
+
+def articles_are_duplicate(left: dict, right: dict) -> bool:
+    left_url = canonical_url(left.get("link", ""))
+    right_url = canonical_url(right.get("link", ""))
+    if left_url and left_url == right_url:
+        return True
+
+    left_ids = document_identifiers(left)
+    right_ids = document_identifiers(right)
+    if left_ids and right_ids and left_ids.intersection(right_ids):
+        return True
+
+    left_country = left.get("country", "")
+    right_country = right.get("country", "")
+    if left_country != right_country and "Global" not in {left_country, right_country}:
+        return False
+
+    date_distance = abs((to_datetime(left.get("date", "")) - to_datetime(right.get("date", ""))).days)
+    if date_distance > 21:
+        return False
+
+    left_type = left.get("legal_update_type", "")
+    right_type = right.get("legal_update_type", "")
+    if left_type and right_type and left_type != right_type:
+        return False
+
+    left_key = article_title_key(left.get("title", ""))
+    right_key = article_title_key(right.get("title", ""))
+    if not left_key or not right_key:
+        return False
+    sequence_similarity = SequenceMatcher(None, left_key, right_key).ratio()
+    left_tokens = article_title_tokens(left_key)
+    right_tokens = article_title_tokens(right_key)
+    union = left_tokens | right_tokens
+    token_similarity = len(left_tokens & right_tokens) / len(union) if union else 0
+    containment = (
+        min(len(left_key), len(right_key)) >= 35
+        and (left_key in right_key or right_key in left_key)
+    )
+    return sequence_similarity >= 0.84 or token_similarity >= 0.62 or containment
+
+
+def article_quality(article: dict) -> tuple:
+    source = article.get("source", "").lower()
+    analytical_source = any(name in source for name in ("iapp", "dataguidance"))
+    return (
+        0 if analytical_source else 1,
+        1 if article.get("strict_match") else 0,
+        int(article.get("legal_priority", 1)),
+        int(article.get("relevance_score", 0)),
+        len(article.get("summary", "")),
+    )
+
+
+def merge_duplicate_articles(primary: dict, duplicate: dict) -> dict:
+    if article_quality(duplicate) > article_quality(primary):
+        primary, duplicate = duplicate, primary
+    sources = set(primary.get("also_reported_by", []))
+    sources.add(primary.get("source", ""))
+    sources.add(duplicate.get("source", ""))
+    links = set(primary.get("alternate_links", []))
+    if duplicate.get("link") and duplicate.get("link") != primary.get("link"):
+        links.add(duplicate["link"])
+    primary["also_reported_by"] = sorted(source for source in sources if source)
+    primary["alternate_links"] = sorted(links)
+    return primary
+
+
+def deduplicate_articles(articles: list[dict]) -> list[dict]:
+    unique: list[dict] = []
+    for article in sorted(articles, key=article_quality, reverse=True):
+        duplicate_index = next(
+            (index for index, existing in enumerate(unique) if articles_are_duplicate(article, existing)),
+            None,
+        )
+        if duplicate_index is None:
+            article.setdefault("also_reported_by", [article.get("source", "")])
+            article.setdefault("alternate_links", [])
+            unique.append(article)
+        else:
+            unique[duplicate_index] = merge_duplicate_articles(unique[duplicate_index], article)
+    return unique
+
+
 def is_valid_url(url: str) -> bool:
+    if not isinstance(url, str) or not url or len(url) > 4096:
+        return False
+    if any(ord(char) < 32 or char in {'"', "'", "<", ">", "\\"} for char in url):
+        return False
     try:
-        parsed = urllib.parse.urlparse(url)
-        return all([parsed.scheme in ("http", "https"), parsed.netloc])
-    except Exception:
+        parsed = urllib.parse.urlsplit(url)
+        return (
+            parsed.scheme in {"http", "https"}
+            and bool(parsed.hostname)
+            and parsed.username is None
+            and parsed.password is None
+        )
+    except (TypeError, ValueError):
         return False
     
 # ─────────────────────────────────────────────
@@ -177,15 +333,6 @@ RSS_SOURCES = [
         "category": "Стандарты",
         "description": "Национальный институт стандартов и технологий",
     },
-    # ── ВЕЛИКОБРИТАНИЯ ────────────────────────
-    {
-        "name": "UK GOV – Technology Policy",
-        "url": "https://www.gov.uk/search/news-and-communications.atom?keywords=artificial+intelligence&organisations[]=department-for-science-innovation-and-technology",
-        "country": "UK",
-        "flag": "🇬🇧",
-        "category": "Законодательство",
-        "description": "Правительство Великобритании — технологическая политика",
-    },
     # ── ЯПОНИЯ ────────────────────────────────
     {
         "name": "Japan Digital Agency",
@@ -194,6 +341,15 @@ RSS_SOURCES = [
         "flag": "🇯🇵",
         "category": "Госуправление",
         "description": "Новости Digital Agency Japan, включая ИИ в государственном секторе",
+    },
+    # ── ЕВРОПЕЙСКИЙ СОЮЗ ─────────────────────
+    {
+        "name": "European Parliament Press Releases",
+        "url": "https://www.europarl.europa.eu/rss/doc/press-releases/en.xml",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Законодательство",
+        "description": "Официальные пресс-релизы Европейского парламента",
     },
 ]
 
@@ -213,30 +369,6 @@ TARGETED_FEED_QUERIES = [
     "general-purpose AI obligations",
     "high-risk AI obligations",
 ]
-
-
-def build_targeted_sources() -> list[dict]:
-    sources = []
-    for query in TARGETED_FEED_QUERIES:
-        encoded = urllib.parse.quote_plus(query)
-        label = query.title()
-        sources.extend([
-            {
-                "name": f"UK GOV – {label}",
-                "url": (
-                    "https://www.gov.uk/search/news-and-communications.atom"
-                    f"?keywords={encoded}"
-                ),
-                "country": "UK",
-                "flag": "🇬🇧",
-                "category": "Законодательство",
-                "description": "Правительство Великобритании — новости и документы по регулированию ИИ",
-            },
-        ])
-    return sources
-
-
-RSS_SOURCES.extend(build_targeted_sources())
 
 ALLOWED_SOURCE_DOMAINS = {
     "eur-lex.europa.eu",
@@ -281,6 +413,8 @@ def hostname(url: str) -> str:
 
 
 def is_allowed_source_url(url: str) -> bool:
+    if not is_valid_url(url):
+        return False
     host = hostname(url)
     return any(host == domain or host.endswith("." + domain) for domain in ALLOWED_SOURCE_DOMAINS)
 
@@ -291,6 +425,59 @@ def request_timeout_for(url: str) -> int:
 
 def html_timeout_for(url: str) -> int:
     return SLOW_REQUEST_TIMEOUT if hostname(url) in SLOW_HOSTS else HTML_REQUEST_TIMEOUT
+
+
+
+def response_text(response: requests.Response) -> str:
+    declared = (response.encoding or "").lower()
+    if not declared or declared in {"iso-8859-1", "latin-1", "windows-1252"}:
+        apparent = response.apparent_encoding
+        if apparent:
+            response.encoding = apparent
+    return response.text
+
+def fetch_html_text(url: str, *, allow_browser: bool = False) -> tuple[str, bool]:
+    """Загружает HTML с резервным соединением для медленных и блокирующих сайтов."""
+    first_error = None
+    fallback_headers = {
+        **HEADERS,
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Encoding": "identity",
+        "Connection": "close",
+    }
+    if hostname(url) in SLOW_HOSTS:
+        try:
+            resp = requests.get(url, headers=fallback_headers, timeout=(7, SLOW_REQUEST_TIMEOUT))
+            resp.raise_for_status()
+            return response_text(resp), False
+        except Exception as exc:
+            if allow_browser:
+                dynamic_html = dynamic_html_fallback(url)
+                if dynamic_html:
+                    return dynamic_html, True
+            raise exc
+
+    try:
+        resp = SESSION.get(url, timeout=(8, html_timeout_for(url)))
+        if resp.status_code not in (403, 429):
+            resp.raise_for_status()
+            return response_text(resp), False
+        first_error = requests.exceptions.HTTPError(response=resp)
+    except Exception as exc:
+        first_error = exc
+
+    try:
+        resp = requests.get(url, headers=fallback_headers, timeout=(10, SLOW_REQUEST_TIMEOUT))
+        resp.raise_for_status()
+        return response_text(resp), False
+    except Exception:
+        if allow_browser:
+            dynamic_html = dynamic_html_fallback(url)
+            if dynamic_html:
+                return dynamic_html, True
+        if first_error:
+            raise first_error
+        raise
 
 
 def is_broad_source(source: dict) -> bool:
@@ -678,7 +865,38 @@ def is_monitoring_relevant(title: str, summary: str = "") -> bool:
     return analysis["is_relevant"] or nlp["label"] in {STRICT_MODE, MONITORING_MODE}
 
 
+def is_low_signal_meeting_title(title: str) -> bool:
+    lowered = re.sub(r"\s+", " ", title.lower())
+    low_signal = any(term in lowered for term in (
+        "meeting notice",
+        "public meeting",
+        "public meetings",
+        "open public event",
+        "meeting minutes",
+        "council minutes",
+        "committee minutes",
+    ))
+    if not low_signal:
+        return False
+    explicit_legal = any(has_term(lowered, term) for term in (
+        "regulation",
+        "regulatory",
+        "law",
+        "act",
+        "bill",
+        "rule",
+        "legislation",
+        "legal",
+        "statute",
+        "directive",
+        "code of practice",
+    ))
+    return not explicit_legal
+
+
 def passes_article_filter(title: str, text: str, *, allow_monitoring: bool = True) -> bool:
+    if is_low_signal_meeting_title(title):
+        return False
     analysis = analyze_legal_ai_relevance(title, text)
     nlp = classify_legal_ai_nlp(title, text)
     if analysis["is_relevant"] and nlp["label"] in {STRICT_MODE, MONITORING_MODE}:
@@ -897,7 +1115,13 @@ def parse_date_text(*parts: str) -> str:
         match = re.search(pattern, text)
         if match:
             try:
-                dt = dateparser.parse(match.group(0), dayfirst=True)
+                value = match.group(0)
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+                    dt = datetime.fromisoformat(value)
+                elif re.fullmatch(r"[A-Z][a-z]+\s+\d{1,2},\s+\d{4}", value):
+                    dt = dateparser.parse(value, dayfirst=False)
+                else:
+                    dt = dateparser.parse(value, dayfirst=True)
                 if dt:
                     if dt.tzinfo is None:
                         dt = dt.replace(tzinfo=timezone.utc)
@@ -961,13 +1185,13 @@ def date_temporal_status(value: str) -> str:
 
 
 def clean_html(text: str) -> str:
-    """Удаляет HTML-теги из текста."""
+    """Удаляет HTML-теги и исправляет типичные ошибки декодирования текста."""
     if not text:
         return ""
-    if "<" not in text and "&" not in text:
-        return re.sub(r'\s+', ' ', str(text)).strip()
-    soup = BeautifulSoup(text, "html.parser")
-    return re.sub(r'\s+', ' ', soup.get_text()).strip() # поиск и замена текста 
+    value = str(text)
+    if "<" in value or "&" in value:
+        value = BeautifulSoup(value, "html.parser").get_text(" ")
+    return re.sub(r"\s+", " ", fix_text(value)).strip()
 
 
 def fetch_rss(source: dict) -> list[dict]:
@@ -975,6 +1199,7 @@ def fetch_rss(source: dict) -> list[dict]:
     articles = []
     raw_count = 0
     rejected_count = 0
+    rejection_reasons: dict[str, int] = {}
     had_error = False
     update_source_diagnostic(source["name"], status="running", url=source.get("url", ""))
     try:
@@ -1011,22 +1236,28 @@ def fetch_rss(source: dict) -> list[dict]:
 
             if not title or not link or not is_valid_url(link):
                 rejected_count += 1
+                rejection_reasons["invalid"] = rejection_reasons.get("invalid", 0) + 1
                 continue
             if not is_allowed_source_url(link):
                 rejected_count += 1
+                rejection_reasons["external"] = rejection_reasons.get("external", 0) + 1
                 continue
             if is_broad_source(source) and not has_primary_ai_signal(title, summary):
                 rejected_count += 1
+                rejection_reasons["no_ai"] = rejection_reasons.get("no_ai", 0) + 1
                 continue
             if not has_explicit_ai_signal(title, summary):
                 rejected_count += 1
+                rejection_reasons["no_ai"] = rejection_reasons.get("no_ai", 0) + 1
                 continue
             if not passes_article_filter(title, summary):
                 rejected_count += 1
+                rejection_reasons["no_legal"] = rejection_reasons.get("no_legal", 0) + 1
                 continue
             date = parse_date(entry)
             if not is_recent_date(date):
                 rejected_count += 1
+                rejection_reasons["old_date"] = rejection_reasons.get("old_date", 0) + 1
                 continue
 
             article = {
@@ -1065,7 +1296,7 @@ def fetch_rss(source: dict) -> list[dict]:
         raw_count=raw_count,
         candidate_count=raw_count,
         rejected_count=rejected_count,
-        message="ok" if articles else "no relevant records after filters",
+        message=format_rejection_summary(raw_count, len(articles), rejection_reasons),
         **mode_summary,
     )
     return articles
@@ -1097,7 +1328,7 @@ def scrape_eurlex_ai() -> list[dict]:
             )
             resp = SESSION.get(url, timeout=request_timeout_for(url))
             time.sleep(random.uniform(0.7, 1.6))
-            soup = BeautifulSoup(resp.text, "html.parser")
+            soup = BeautifulSoup(response_text(resp), "html.parser")
 
             results = soup.select(".SearchResult")[:8]
             for r in results:
@@ -1166,7 +1397,7 @@ def scrape_congress_ai() -> list[dict]:
             )
             resp = SESSION.get(url, timeout=request_timeout_for(url))
             time.sleep(random.uniform(0.7, 1.6))
-            soup = BeautifulSoup(resp.text, "html.parser")
+            soup = BeautifulSoup(response_text(resp), "html.parser")
 
             for item in soup.select("li.expanded")[:10]:
                 title_tag = item.select_one("span.result-heading a")
@@ -1246,7 +1477,7 @@ def scrape_federal_register_ai() -> list[dict]:
 
                 if not title or not is_recent_date(date):
                     continue
-                if not has_primary_ai_signal(title, summary):
+                if not has_primary_ai_signal(title, ""):
                     continue
                 if not has_explicit_ai_signal(title, relevance_text):
                     continue
@@ -1278,6 +1509,43 @@ def scrape_federal_register_ai() -> list[dict]:
 
 
 HTML_SEARCH_SOURCES = [
+    {
+        "name": "UK GOV – AI Regulation Search",
+        "url": "https://www.gov.uk/search/all?keywords=artificial%20intelligence%20regulation&order=updated-newest",
+        "country": "UK",
+        "flag": "🇬🇧",
+        "category": "Законодательство",
+        "description": "Официальный поиск GOV.UK по регулированию искусственного интеллекта",
+        "base_url": "https://www.gov.uk",
+        "selectors": ["li.gem-c-document-list__item"],
+        "fetch_details": True,
+        "max_detail_pages": 15,
+    },
+    {
+        "name": "European Data Protection Board News",
+        "url": "https://www.edpb.europa.eu/news/news_en",
+        "country": "EU",
+        "flag": "🇪🇺",
+        "category": "Регулятор",
+        "description": "Официальные новости EDPB, включая guidance и решения по ИИ и защите данных",
+        "base_url": "https://www.edpb.europa.eu",
+        "selectors": [".views-row"],
+        "fetch_details": True,
+        "max_detail_pages": 12,
+    },
+    {
+        "name": "USA FTC – AI Press Releases",
+        "url": "https://www.ftc.gov/news-events/news/press-releases?search=artificial%20intelligence",
+        "country": "USA",
+        "flag": "🇺🇸",
+        "category": "Регулятор",
+        "description": "Официальные пресс-релизы FTC по ИИ, алгоритмам и правоприменению",
+        "base_url": "https://www.ftc.gov",
+        "selectors": [".node--view-mode-search-result", ".views-row"],
+        "link_selector": ".node-title a",
+        "fetch_details": True,
+        "max_detail_pages": 15,
+    },
     {
         "name": "DataGuidance – Artificial Intelligence",
         "url": "https://www.dataguidance.com/topics/artificial-intelligence",
@@ -1427,7 +1695,7 @@ OFFICIAL_PAGE_SOURCES = [
         "country": "UK",
         "flag": "🇬🇧",
         "category": "Регулятор",
-        "description": "ICO response to UK Government on safe AI-powered innovation and regulatory certainty",
+        "description": "Official regulator response about proposed AI regulation, legal requirements and regulatory certainty",
         "date": "2026-05-29",
     },
     {
@@ -1487,6 +1755,8 @@ OFFICIAL_PAGE_SOURCES = [
         "category": "Руководства",
         "description": "Model AI Governance Framework for Agentic AI",
         "date": "2026-01-22",
+        "browser_fallback": True,
+        "use_config_fallback": True,
     },
     {
         "name": "Singapore AI Governance Framework",
@@ -1495,6 +1765,7 @@ OFFICIAL_PAGE_SOURCES = [
         "flag": "🇸🇬",
         "category": "Руководства",
         "description": "Singapore approach to AI governance",
+        "browser_fallback": True,
     },
     {
         "name": "Japan Cabinet Office AI Act",
@@ -1503,6 +1774,7 @@ OFFICIAL_PAGE_SOURCES = [
         "flag": "🇯🇵",
         "category": "Госуправление",
         "description": "Cabinet Office Japan: AI Act materials, legal text and official AI policy documents",
+        "title": "Japan Cabinet Office: Artificial Intelligence Act",
         "date": "2025-06-04",
     },
     {
@@ -1513,6 +1785,7 @@ OFFICIAL_PAGE_SOURCES = [
         "category": "Законодательство",
         "description": "Official Korea.net policy news on AI Basic Act",
         "date": "2026-01-22",
+        "use_config_fallback": True,
     },
     {
         "name": "Brazil AI Bill",
@@ -1522,6 +1795,8 @@ OFFICIAL_PAGE_SOURCES = [
         "category": "Законопроекты",
         "description": "Brazil Senate advances discussions on bill to regulate AI use",
         "date": "2025-05-23",
+        "browser_fallback": True,
+        "use_config_fallback": True,
     },
 ]
 
@@ -1548,7 +1823,13 @@ def extract_page_date(soup: BeautifulSoup, *fallback_parts: str) -> str:
     return parse_date_text(*parts)
 
 
-def html_candidate_blocks(soup: BeautifulSoup) -> list:
+def html_candidate_blocks(soup: BeautifulSoup, selectors: list[str] | None = None) -> list:
+    if selectors:
+        for selector in selectors:
+            blocks = soup.select(selector)
+            if blocks:
+                return blocks
+        return []
     selectors = [
         "article",
         "li",
@@ -1566,8 +1847,12 @@ def html_candidate_blocks(soup: BeautifulSoup) -> list:
     return blocks or soup.select("a[href]")
 
 
-def best_link_from_block(block, base_url: str) -> tuple[str, str]:
-    link_tag = block if getattr(block, "name", "") == "a" else block.select_one("a[href]")
+def best_link_from_block(block, base_url: str, link_selector: str = "") -> tuple[str, str]:
+    link_tag = block if getattr(block, "name", "") == "a" else None
+    if link_tag is None and link_selector:
+        link_tag = block.select_one(link_selector)
+    if link_tag is None:
+        link_tag = block.select_one("a[href]")
     if not link_tag:
         return "", ""
     title = clean_html(link_tag.get_text(" "))
@@ -1576,6 +1861,28 @@ def best_link_from_block(block, base_url: str) -> tuple[str, str]:
     href = link_tag.get("href", "")
     link = fix_url(urllib.parse.urljoin(base_url, href))
     return title, link
+
+
+def fetch_detail_context(url: str) -> tuple[str, str]:
+    """Загружает страницу материала и возвращает основной текст и дату."""
+    try:
+        resp = SESSION.get(url, timeout=html_timeout_for(url))
+        resp.raise_for_status()
+        soup = BeautifulSoup(response_text(resp), "html.parser")
+        description = soup.select_one(
+            "meta[name='description'], meta[property='og:description'], meta[name='twitter:description']"
+        )
+        description_text = clean_html(description.get("content", "")) if description else ""
+        content_nodes = soup.select(
+            "main p, main li, article p, article li, "
+            ".field--name-body p, .field--name-body li, .gem-c-govspeak p, .gem-c-govspeak li"
+        )
+        body_text = clean_html(" ".join(node.get_text(" ") for node in content_nodes))
+        detail_text = clean_html(f"{description_text} {body_text}")[:12000]
+        return detail_text, extract_page_date(soup, description_text, body_text[:2000])
+    except Exception as exc:
+        logger.debug(f"[detail] Не удалось загрузить {url}: {exc}")
+        return "", datetime(1970, 1, 1, tzinfo=timezone.utc).isoformat()
 
 
 def dynamic_html_fallback(url: str) -> str:
@@ -1609,49 +1916,76 @@ def scrape_html_search_source(source: dict) -> list[dict]:
     seen = set()
     candidate_count = 0
     rejected_count = 0
+    rejection_reasons: dict[str, int] = {}
+    detail_pages_loaded = 0
     used_browser_fallback = False
     had_error = False
     update_source_diagnostic(source["name"], status="running", url=source.get("url", ""))
     try:
         logger.info(f"[{source['name']}] HTML-поиск: {source['url']}")
-        resp = SESSION.get(source["url"], timeout=html_timeout_for(source["url"]))
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+        html, request_used_browser = fetch_html_text(source["url"])
+        used_browser_fallback = request_used_browser
+        soup = BeautifulSoup(html, "html.parser")
 
-        blocks = html_candidate_blocks(soup)
+        blocks = html_candidate_blocks(soup, source.get("selectors"))
         if len(blocks) <= 3:
             dynamic_html = dynamic_html_fallback(source["url"])
             if dynamic_html:
                 used_browser_fallback = True
                 soup = BeautifulSoup(dynamic_html, "html.parser")
-                blocks = html_candidate_blocks(soup)
+                blocks = html_candidate_blocks(soup, source.get("selectors"))
 
-        for block in blocks:
-            title, link = best_link_from_block(block, source["base_url"])
+        for block in blocks[:source.get("max_blocks", 100)]:
+            title, link = best_link_from_block(block, source["base_url"], source.get("link_selector", ""))
             if not title or len(title) < 18:
                 rejected_count += 1
+                rejection_reasons["invalid"] = rejection_reasons.get("invalid", 0) + 1
                 continue
 
             if link in seen or not is_valid_url(link) or not is_allowed_source_url(link):
                 rejected_count += 1
+                reason = "duplicate" if link in seen else "external"
+                rejection_reasons[reason] = rejection_reasons.get(reason, 0) + 1
                 continue
 
             candidate_count += 1
             context = clean_html(block.get_text(" ")) if block else title
-            relevance_text = context
             if not has_primary_ai_signal(title, context):
                 rejected_count += 1
+                rejection_reasons["no_ai"] = rejection_reasons.get("no_ai", 0) + 1
                 continue
+
+            date = parse_date_text(context, title)
+            should_fetch_detail = source.get("fetch_details") and detail_pages_loaded < source.get("max_detail_pages", 10)
+            if should_fetch_detail and (
+                is_unknown_date(date)
+                or not has_explicit_ai_signal(title, context)
+                or not passes_article_filter(title, context)
+            ):
+                detail_text, detail_date = fetch_detail_context(link)
+                detail_pages_loaded += 1
+                if detail_text:
+                    context = clean_html(f"{context} {detail_text}")
+                if not is_unknown_date(detail_date):
+                    date = detail_date
+
+            relevance_text = context
             if not has_explicit_ai_signal(title, relevance_text):
                 rejected_count += 1
+                rejection_reasons["no_ai"] = rejection_reasons.get("no_ai", 0) + 1
                 continue
             if not passes_article_filter(title, relevance_text):
                 rejected_count += 1
+                rejection_reasons["no_legal"] = rejection_reasons.get("no_legal", 0) + 1
                 continue
 
-            date = parse_date_text(context, title, link, extract_page_date(soup, context, title, link))
+            if is_unknown_date(date):
+                rejected_count += 1
+                rejection_reasons["unknown_date"] = rejection_reasons.get("unknown_date", 0) + 1
+                continue
             if not is_recent_date(date):
                 rejected_count += 1
+                rejection_reasons["old_date"] = rejection_reasons.get("old_date", 0) + 1
                 continue
 
             seen.add(link)
@@ -1691,7 +2025,7 @@ def scrape_html_search_source(source: dict) -> list[dict]:
     mode_summary = summarize_article_modes(articles)
     msg = "ok"
     if not articles:
-        msg = "no relevant HTML candidates after filters"
+        msg = format_rejection_summary(candidate_count, 0, rejection_reasons)
         if used_browser_fallback:
             msg += "; browser fallback used"
     elif used_browser_fallback:
@@ -1708,17 +2042,58 @@ def scrape_html_search_source(source: dict) -> list[dict]:
     return articles
 
 
+
+def configured_official_fallback(source: dict, diagnostic_status: str, message: str) -> list[dict]:
+    if not source.get("use_config_fallback") or not source.get("date"):
+        return []
+    date = parse_date_text(source["date"])
+    if not is_recent_date(date) or date_temporal_status(date) == "future":
+        return []
+    title = source.get("title") or source["name"]
+    summary = source.get("description", "")
+    if not passes_article_filter(title, summary) and not is_official_ai_law_page(title, summary):
+        return []
+    article = {
+        "id": re.sub(r"\W+", "_", source["url"])[:80],
+        "title": title,
+        "summary": summary,
+        "link": source["url"],
+        "date": date,
+        "collected_at": datetime.now(timezone.utc).isoformat(),
+        "source": source["name"],
+        "country": source["country"],
+        "flag": source["flag"],
+        "category": source["category"],
+        "source_description": summary,
+        "relevance_score": relevance_score(title, summary),
+        "legal_update_type": legal_update_type(title, summary),
+        "legal_priority": legal_priority(title, summary),
+        "retrieval_status": "configured_fallback",
+    }
+    result = [attach_analysis(article, title, summary)]
+    update_source_diagnostic(
+        source["name"],
+        status=diagnostic_status,
+        raw_count=0,
+        candidate_count=1,
+        message=f"{message}; material retained from verified configuration",
+        **summarize_article_modes(result),
+    )
+    return result
+
 def scrape_official_page(source: dict) -> list[dict]:
     """Добавляет важную официальную страницу как отдельный материал, если она свежая и релевантная."""
     update_source_diagnostic(source["name"], status="running", url=source.get("url", ""))
     try:
         logger.info(f"[{source['name']}] Проверка официальной страницы: {source['url']}")
-        resp = SESSION.get(source["url"], timeout=html_timeout_for(source["url"]))
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+        html, used_browser_fallback = fetch_html_text(
+            source["url"],
+            allow_browser=bool(source.get("browser_fallback", False)),
+        )
+        soup = BeautifulSoup(html, "html.parser")
 
         title_tag = soup.select_one("h1") or soup.select_one("title")
-        title = clean_html(title_tag.get_text(" ")) if title_tag else source["name"]
+        title = source.get("title") or (clean_html(title_tag.get_text(" ")) if title_tag else source["name"])
         content_nodes = soup.select(
             "main, article, .content, .field, .field__item, p, li, time, "
             ".date, .field--name-created, .gc-byline"
@@ -1744,6 +2119,9 @@ def scrape_official_page(source: dict) -> list[dict]:
             return []
         if is_unknown_date(date):
             update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="date is unknown")
+            return []
+        if date_temporal_status(date) == "future" and not source.get("allow_future_date", False):
+            update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="page date is in the future")
             return []
         if not is_recent_date(date):
             update_source_diagnostic(source["name"], status="ok", raw_count=1, candidate_count=1, rejected_count=1, message="date is older than monitoring period")
@@ -1772,7 +2150,7 @@ def scrape_official_page(source: dict) -> list[dict]:
             raw_count=1,
             candidate_count=1,
             rejected_count=0,
-            message="ok",
+            message="ok; browser fallback used" if used_browser_fallback else "ok",
             **summarize_article_modes(result),
         )
         return result
@@ -1787,7 +2165,12 @@ def scrape_official_page(source: dict) -> list[dict]:
         else:
             logger.error(f"[{source['name']}] Ошибка страницы: {e}")
             update_source_diagnostic(source["name"], status="error", message=str(e)[:220])
-        return []
+        current = SOURCE_DIAGNOSTICS.get(source["name"], {})
+        return configured_official_fallback(
+            source,
+            current.get("status", "error"),
+            current.get("message", str(e)[:220]),
+        )
 
 
 # ─────────────────────────────────────────────
@@ -1802,6 +2185,7 @@ def fetch_all_articles(include_diagnostics: bool = False):
             source["name"],
             status="pending",
             url=source.get("url", ""),
+            country=source.get("country", ""),
             message="waiting",
         )
     all_articles = []
@@ -1839,10 +2223,13 @@ def fetch_all_articles(include_diagnostics: bool = False):
                     current_diag = SOURCE_DIAGNOSTICS.get(name, {})
                     current_message = current_diag.get("message", "")
                     if final_source_status(name) == "ok" and current_message in {"", "waiting", "running"}:
+                        result_count = len(result)
                         update_source_diagnostic(
                             name,
                             status="ok",
-                            message="ok" if result else "source returned no relevant records",
+                            raw_count=max(int(current_diag.get("raw_count", 0)), result_count),
+                            candidate_count=max(int(current_diag.get("candidate_count", 0)), result_count),
+                            message="ok" if result else "прочитано 0, релевантных материалов не найдено",
                             **summarize_article_modes(result),
                         )
                     logger.info(f"[{name}] Релевантных: {len(result)}")
@@ -1863,19 +2250,9 @@ def fetch_all_articles(include_diagnostics: bool = False):
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 
-    # Дедубликация по нормализованной ссылке и заголовку.
-    seen_links = set()
-    seen_titles = set()
-    unique = []
-    for a in all_articles:
-        link_key = canonical_url(a.get("link", ""))
-        title_key = article_title_key(a.get("title", ""))
-        if not link_key or link_key in seen_links or (title_key and title_key in seen_titles):
-            continue
-        seen_links.add(link_key)
-        if title_key:
-            seen_titles.add(title_key)
-        unique.append(a)
+    # Межсайтовая дедупликация: URL, идентификаторы актов, похожие заголовки,
+    # страна, тип правового события и близость дат.
+    unique = deduplicate_articles(all_articles)
 
     # Сортировка по реальной дате материала: сначала самые новые и актуальные.
     unique.sort(

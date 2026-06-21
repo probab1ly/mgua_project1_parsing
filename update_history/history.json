@@ -1,5 +1,57 @@
 [
   {
+    "id": "20260620_190224_340868",
+    "created_at": "2026-06-20T19:02:24.340856+00:00",
+    "total": 31,
+    "strict_total": 22,
+    "monitoring_total": 9,
+    "sources_count": 34,
+    "diagnostics_total": 34,
+    "ok_sources": 23,
+    "problem_sources": 11,
+    "excel_file": "update_20260620_190224_340868.xlsx",
+    "auto_refresh": false
+  },
+  {
+    "id": "20260613_181358_375433",
+    "created_at": "2026-06-13T18:13:58.375433+00:00",
+    "total": 41,
+    "strict_total": 27,
+    "monitoring_total": 14,
+    "sources_count": 34,
+    "diagnostics_total": 34,
+    "ok_sources": 27,
+    "problem_sources": 7,
+    "excel_file": "update_20260613_181358_375433.xlsx",
+    "auto_refresh": false
+  },
+  {
+    "id": "20260613_181221_679276",
+    "created_at": "2026-06-13T18:12:21.679276+00:00",
+    "total": 37,
+    "strict_total": 24,
+    "monitoring_total": 13,
+    "sources_count": 34,
+    "diagnostics_total": 34,
+    "ok_sources": 27,
+    "problem_sources": 7,
+    "excel_file": "update_20260613_181221_679276.xlsx",
+    "auto_refresh": false
+  },
+  {
+    "id": "20260613_180553_084098",
+    "created_at": "2026-06-13T18:05:53.084098+00:00",
+    "total": 34,
+    "strict_total": 20,
+    "monitoring_total": 14,
+    "sources_count": 34,
+    "diagnostics_total": 34,
+    "ok_sources": 26,
+    "problem_sources": 8,
+    "excel_file": "update_20260613_180553_084098.xlsx",
+    "auto_refresh": false
+  },
+  {
     "id": "20260607_192320_447508",
     "created_at": "2026-06-07T19:23:20.447508+00:00",
     "total": 33,

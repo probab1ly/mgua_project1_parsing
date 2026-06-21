@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 users.json
 email_config.json
+.ai_monitor_secret
+.refresh.lock
+qa_artifacts/
+private_credentials.txt

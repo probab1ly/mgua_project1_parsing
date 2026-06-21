@@ -5,18 +5,19 @@ import webbrowser
 import hashlib
 import hmac
 import os
+import secrets
 import ssl
 import smtplib
 import time
 import urllib.parse
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from functools import wraps
 from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session, url_for
-from flask_cors import CORS
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill, Side, Border
 
 from scraper import (
@@ -34,26 +35,72 @@ from scraper import (
     legal_priority,
     legal_update_type,
     to_datetime,
+    deduplicate_articles,
+    attach_analysis,
+    passes_article_filter,
+    relevance_score,
+    OFFICIAL_PAGE_SOURCES,
+    clean_html,
+    date_temporal_status,
 )
 
-# yldp rxco fwzj kshz
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
+SECRET_KEY_FILE = Path(".ai_monitor_secret")
+
+
+def load_secret_key() -> str:
+    configured = os.environ.get("AI_MONITOR_SECRET_KEY", "").strip()
+    if configured:
+        if len(configured) < 32:
+            raise RuntimeError("AI_MONITOR_SECRET_KEY must contain at least 32 characters")
+        return configured
+    if SECRET_KEY_FILE.exists():
+        stored = SECRET_KEY_FILE.read_text(encoding="utf-8").strip()
+        if len(stored) >= 32:
+            return stored
+    generated = secrets.token_urlsafe(48)
+    SECRET_KEY_FILE.write_text(generated, encoding="utf-8")
+    try:
+        os.chmod(SECRET_KEY_FILE, 0o600)
+    except OSError:
+        pass
+    logger.warning("AI_MONITOR_SECRET_KEY is not set; generated private local key in %s", SECRET_KEY_FILE)
+    return generated
+
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("AI_MONITOR_SECRET_KEY", "change-this-secret-key-before-production")
-CORS(app)
+app.secret_key = load_secret_key()
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Strict",
+    SESSION_COOKIE_SECURE=os.environ.get("AI_MONITOR_HTTPS", "").lower() in {"1", "true", "yes"},
+    MAX_CONTENT_LENGTH=64 * 1024,
+    MAX_FORM_MEMORY_SIZE=64 * 1024,
+    MAX_FORM_PARTS=20,
+)
 
 CACHE_FILE = Path("cache.json")
+CACHE_TEMP_FILE = Path("cache.json.tmp")
 USERS_FILE = Path("users.json")
 EMAIL_CONFIG_FILE = Path("email_config.json")
 HISTORY_DIR = Path("update_history")
 HISTORY_INDEX_FILE = HISTORY_DIR / "history.json"
-CACHE_VERSION = 12
+REFRESH_LOCK_FILE = Path(".refresh.lock")
+REFRESH_LOCK_STALE_SECONDS = 15 * 60
+CACHE_VERSION = 13
 CACHE_LOCK = threading.Lock()
+HISTORY_LOCK = threading.RLock()
+LOGIN_RATE_LOCK = threading.Lock()
+LOGIN_ATTEMPTS: dict[str, deque[float]] = defaultdict(deque)
+LOGIN_RATE_WINDOW_SECONDS = 15 * 60
+LOGIN_RATE_MAX_ATTEMPTS = 10
 WEEKLY_REFRESH_INTERVAL_SECONDS = 7 * 24 * 60 * 60
 
 USERS: dict[str, str] = {}
+_cache_file_mtime = 0.0
 
 _cache: dict = {
     "articles": [],
@@ -63,7 +110,117 @@ _cache: dict = {
     "loading": False,
     "diagnostics": [],
     "last_auto_refresh": None,
+    "refresh_owner": None,
+    "refresh_status": "idle",
+    "refresh_error": None,
+    "refresh_finished_at": None,
 }
+
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+        "font-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self'; "
+        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    )
+    if request.is_secure:
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    response.headers.pop("Access-Control-Allow-Origin", None)
+    return response
+
+
+def csrf_token() -> str:
+    token = session.get("_csrf_token")
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session["_csrf_token"] = token
+    return token
+
+
+def csrf_is_valid() -> bool:
+    supplied = request.headers.get("X-CSRF-Token") or request.form.get("_csrf_token", "")
+    expected = session.get("_csrf_token", "")
+    return bool(supplied and expected and hmac.compare_digest(supplied, expected))
+
+
+def client_ip() -> str:
+    return request.remote_addr or "unknown"
+
+
+def login_rate_limited() -> bool:
+    now = time.monotonic()
+    with LOGIN_RATE_LOCK:
+        attempts = LOGIN_ATTEMPTS[client_ip()]
+        while attempts and now - attempts[0] > LOGIN_RATE_WINDOW_SECONDS:
+            attempts.popleft()
+        return len(attempts) >= LOGIN_RATE_MAX_ATTEMPTS
+
+
+def record_login_failure() -> None:
+    with LOGIN_RATE_LOCK:
+        LOGIN_ATTEMPTS[client_ip()].append(time.monotonic())
+
+
+def clear_login_failures() -> None:
+    with LOGIN_RATE_LOCK:
+        LOGIN_ATTEMPTS.pop(client_ip(), None)
+
+
+def safe_next_url(value: str | None) -> str:
+    if not value:
+        return url_for("index")
+    parsed = urllib.parse.urlsplit(value)
+    if parsed.scheme or parsed.netloc or not value.startswith("/") or value.startswith("//"):
+        return url_for("index")
+    return value
+
+
+def neutralize_spreadsheet_value(value):
+    if isinstance(value, str) and value.startswith(("=", "+", "-", "@")):
+        return "'" + value
+    return value
+
+
+
+OFFICIAL_SOURCE_NAMES = {source["name"] for source in OFFICIAL_PAGE_SOURCES}
+SOURCE_BY_NAME = {source["name"]: source for source in ALL_SOURCES}
+
+
+def validate_and_analyze_article(article: dict) -> dict | None:
+    source_name = article.get("source", "")
+    source = SOURCE_BY_NAME.get(source_name, {})
+    title = source.get("title") or clean_html(article.get("title", ""))
+    summary = clean_html(article.get("summary", ""))
+    link = article.get("link", "")
+    if not title or not is_allowed_source_url(link):
+        return None
+    if date_temporal_status(article.get("date", "")) == "future":
+        return None
+    enriched_text = f"{summary} {source.get('description', '')}".strip()
+    if source_name == "Federal Register (официальный API)":
+        relevant = has_primary_ai_signal(title, "") and passes_article_filter(title, summary)
+    elif source_name in OFFICIAL_SOURCE_NAMES:
+        relevant = has_primary_ai_signal(title, enriched_text) and (
+            passes_article_filter(title, enriched_text)
+            or is_official_ai_law_page(title, enriched_text)
+        )
+    else:
+        relevant = (
+            has_explicit_ai_signal(title, summary)
+            and passes_article_filter(title, summary)
+        )
+    if not relevant:
+        return None
+    article["title"] = title
+    article["summary"] = summary
+    return attach_analysis(article, title, enriched_text if source_name in OFFICIAL_SOURCE_NAMES else summary)
 
 
 def load_users() -> dict[str, str]:
@@ -115,6 +272,8 @@ def login_required(view_func):
 
 
 USERS.update(load_users())
+DUMMY_PASSWORD_HASH = next(iter(USERS.values()), "pbkdf2_sha256$260000$dummy$"
+    "059d8ce6687bd7309efab7af4d7b55557bfc51a7c4cfa9770602cd18f337a04b")
 
 
 def split_articles_by_mode(articles: list[dict], mode: str) -> list[dict]:
@@ -135,20 +294,122 @@ def article_counts(articles: list[dict]) -> dict:
     }
 
 
-def read_history_index() -> list[dict]:
-    if not HISTORY_INDEX_FILE.exists():
-        return []
+def acquire_refresh_lock(owner: str) -> bool:
+    with CACHE_LOCK:
+        if _cache.get("loading"):
+            return False
+        if REFRESH_LOCK_FILE.exists():
+            try:
+                age = time.time() - REFRESH_LOCK_FILE.stat().st_mtime
+                if age < REFRESH_LOCK_STALE_SECONDS:
+                    return False
+                REFRESH_LOCK_FILE.unlink(missing_ok=True)
+            except OSError:
+                return False
+        try:
+            descriptor = os.open(
+                str(REFRESH_LOCK_FILE),
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+            with os.fdopen(descriptor, "w", encoding="utf-8") as lock_file:
+                lock_file.write(json.dumps({
+                    "pid": os.getpid(),
+                    "owner": owner,
+                    "started_at": datetime.now(timezone.utc).isoformat(),
+                }, ensure_ascii=False))
+        except FileExistsError:
+            return False
+        _cache["loading"] = True
+        _cache["refresh_owner"] = owner
+        return True
+
+
+def release_refresh_lock() -> None:
+    with CACHE_LOCK:
+        _cache["loading"] = False
+        _cache["refresh_owner"] = None
     try:
-        data = json.loads(HISTORY_INDEX_FILE.read_text(encoding="utf-8"))
-        return data if isinstance(data, list) else []
-    except Exception as e:
-        logger.error(f"Ошибка чтения истории обновлений: {e}")
-        return []
+        REFRESH_LOCK_FILE.unlink(missing_ok=True)
+    except OSError as exc:
+        logger.warning(f"Не удалось удалить файл блокировки обновления: {exc}")
+
+
+def read_history_index() -> list[dict]:
+    with HISTORY_LOCK:
+        if not HISTORY_INDEX_FILE.exists():
+            return []
+        try:
+            data = json.loads(HISTORY_INDEX_FILE.read_text(encoding="utf-8"))
+            return data if isinstance(data, list) else []
+        except Exception as e:
+            logger.error(f"Ошибка чтения истории обновлений: {e}")
+            return []
 
 
 def write_history_index(history: list[dict]) -> None:
     HISTORY_DIR.mkdir(parents=True, exist_ok=True)
-    HISTORY_INDEX_FILE.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary = HISTORY_INDEX_FILE.with_suffix(".json.tmp")
+    with HISTORY_LOCK:
+        temporary.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(temporary, HISTORY_INDEX_FILE)
+
+
+def load_recent_history_articles(limit: int = 5) -> list[dict]:
+    """Восстанавливает актуальные материалы из прошлых Excel-отчетов."""
+    source_map = {source["name"]: source for source in ALL_SOURCES}
+    restored = []
+    for record in read_history_index()[:limit]:
+        filename = record.get("excel_file", "")
+        if not filename:
+            continue
+        path = HISTORY_DIR / filename
+        if not path.exists():
+            continue
+        try:
+            workbook = load_workbook(path, read_only=True, data_only=True)
+            sheet = workbook["Материалы"]
+            headers = {
+                cell.value: index
+                for index, cell in enumerate(sheet[1])
+                if cell.value
+            }
+            required = {"Дата материала", "Страна/регион", "Категория", "Источник", "Заголовок", "Краткое описание", "URL"}
+            if not required.issubset(headers):
+                workbook.close()
+                continue
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                value = lambda name: row[headers[name]] if headers[name] < len(row) else ""
+                title = str(value("Заголовок") or "").strip()
+                summary = str(value("Краткое описание") or "").strip()
+                link = str(value("URL") or "").strip()
+                source_name = str(value("Источник") or "").strip()
+                date = parse_date_text(str(value("Дата материала") or ""))
+                if not title or not link or not is_recent_date(date) or not is_allowed_source_url(link):
+                    continue
+                source = source_map.get(source_name, {})
+                article = {
+                    "id": hashlib.sha256(link.encode("utf-8")).hexdigest()[:24],
+                    "title": title,
+                    "summary": summary[:500] or "Нет описания",
+                    "link": link,
+                    "date": date,
+                    "collected_at": record.get("created_at"),
+                    "source": source_name,
+                    "country": str(value("Страна/регион") or source.get("country", "Global")),
+                    "flag": source.get("flag", "🌐"),
+                    "category": str(value("Категория") or source.get("category", "Правовое регулирование")),
+                    "source_description": source.get("description", "Восстановлено из истории обновлений"),
+                    "relevance_score": relevance_score(title, summary),
+                    "legal_update_type": legal_update_type(title, summary),
+                    "legal_priority": legal_priority(title, summary),
+                }
+                validated = validate_and_analyze_article(article)
+                if validated:
+                    restored.append(validated)
+            workbook.close()
+        except Exception as exc:
+            logger.warning(f"Не удалось прочитать исторический отчет {path}: {exc}")
+    return deduplicate_articles(restored)
 
 
 def email_status_payload() -> dict:
@@ -157,7 +418,7 @@ def email_status_payload() -> dict:
     host = config.get("smtp_host") or os.environ.get("AI_MONITOR_SMTP_HOST")
     username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
     sender = config.get("from_email") or username
-    password = config.get("smtp_password") or os.environ.get("AI_MONITOR_SMTP_PASSWORD")
+    password = os.environ.get("AI_MONITOR_SMTP_PASSWORD")
     return {
         "enabled": bool(config.get("enabled")),
         "recipients": recipients,
@@ -199,7 +460,7 @@ def send_email_notification(subject: str, body: str) -> bool:
     host = config.get("smtp_host") or os.environ.get("AI_MONITOR_SMTP_HOST")
     port = int(config.get("smtp_port") or os.environ.get("AI_MONITOR_SMTP_PORT", "587"))
     username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
-    password = config.get("smtp_password") or os.environ.get("AI_MONITOR_SMTP_PASSWORD")
+    password = os.environ.get("AI_MONITOR_SMTP_PASSWORD")
     sender = config.get("from_email") or username
     use_tls = config_bool(config, "use_tls", True)
     use_ssl = config_bool(config, "use_ssl", False) or config_bool(config, "smtp_ssl", False)
@@ -374,6 +635,7 @@ def build_excel_report(articles: list[dict], diagnostics: list[dict], updated_at
         "NLP-метка",
         "NLP уверенность",
         "Причина отбора",
+        "Также найдено в источниках",
     ]
     ws.append(headers)
     for index, article in enumerate(articles, start=1):
@@ -394,8 +656,9 @@ def build_excel_report(articles: list[dict], diagnostics: list[dict], updated_at
             article.get("nlp_label") or article.get("filter_mode", ""),
             article.get("nlp_confidence") or article.get("analysis_confidence", ""),
             article.get("nlp_reason") or article.get("analysis_reason", ""),
+            ", ".join(article.get("also_reported_by", [])),
         ]
-        ws.append(row)
+        ws.append([neutralize_spreadsheet_value(value) for value in row])
         if url:
             url_cell = ws.cell(row=index + 1, column=10)
             url_cell.hyperlink = url
@@ -403,7 +666,7 @@ def build_excel_report(articles: list[dict], diagnostics: list[dict], updated_at
     style_header(ws)
     auto_fit_sheet(ws, {
         1: 6, 2: 18, 3: 18, 4: 16, 5: 24, 6: 26, 7: 32,
-        8: 52, 9: 72, 10: 64, 11: 16, 12: 16, 13: 72,
+        8: 52, 9: 72, 10: 64, 11: 16, 12: 16, 13: 72, 14: 48,
     })
 
     ds = wb.create_sheet("Диагностика")
@@ -499,9 +762,10 @@ def save_update_history(articles: list[dict], diagnostics: list[dict], auto_refr
             "excel_file": filename,
             "auto_refresh": auto_refresh,
         }
-        history = [item for item in read_history_index() if item.get("id") != record_id]
-        history.insert(0, record)
-        write_history_index(history[:100])
+        with HISTORY_LOCK:
+            history = [item for item in read_history_index() if item.get("id") != record_id]
+            history.insert(0, record)
+            write_history_index(history[:100])
         logger.info(f"Отчёт обновления сохранён: {file_path}")
         return record
     except Exception as e:
@@ -510,6 +774,7 @@ def save_update_history(articles: list[dict], diagnostics: list[dict], auto_refr
 
 
 def save_cache(articles: list, diagnostics: list | None = None, last_auto_refresh: str | None = None) -> None:
+    global _cache_file_mtime
     payload = {
         "cache_version": CACHE_VERSION,
         "articles": articles,
@@ -521,15 +786,17 @@ def save_cache(articles: list, diagnostics: list | None = None, last_auto_refres
     }
     with CACHE_LOCK:
         _cache.update(payload)
-        _cache["loading"] = False 
     try:
-        CACHE_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        CACHE_TEMP_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(CACHE_TEMP_FILE, CACHE_FILE)
+        _cache_file_mtime = CACHE_FILE.stat().st_mtime
         logger.info("Кэш сохранён на диск")
     except Exception as e:
         logger.error(f"Ошибка сохранения кэша: {e}")
 
 
 def load_cache_from_disk() -> bool:
+    global _cache_file_mtime
     if not CACHE_FILE.exists():
         return False
     try:
@@ -539,18 +806,8 @@ def load_cache_from_disk() -> bool:
             return False
         articles = []
         for article in data.get("articles", []):
-            cached_nlp_ok = article.get("nlp_label") in {"strict", "monitoring"} or article.get("filter_mode") in {"strict", "monitoring"}
-            if not is_allowed_source_url(article.get("link", "")):
-                continue
-            if not cached_nlp_ok and not has_explicit_ai_signal(article.get("title", ""), article.get("summary", "")):
-                continue
-            if article.get("source") == "Federal Register (официальный API)" and not cached_nlp_ok and not has_primary_ai_signal(article.get("title", ""), article.get("summary", "")):
-                continue
-            if (
-                not cached_nlp_ok
-                and not is_monitoring_relevant(article.get("title", ""), article.get("summary", ""))
-                and not is_official_ai_law_page(article.get("title", ""), article.get("summary", ""))
-            ):
+            article = validate_and_analyze_article(article)
+            if not article:
                 continue
             if "прямой поиск" in article.get("source", "") and not article.get("collected_at"):
                 article["collected_at"] = article.get("date")
@@ -565,15 +822,6 @@ def load_cache_from_disk() -> bool:
                 "legal_priority",
                 legal_priority(article.get("title", ""), article.get("summary", "")),
             )
-            article.setdefault(
-                "strict_match",
-                is_ai_relevant(article.get("title", ""), article.get("summary", "")),
-            )
-            article.setdefault("filter_mode", "strict" if article.get("strict_match") else "monitoring")
-            article.setdefault("nlp_label", article.get("filter_mode", "monitoring"))
-            article.setdefault("nlp_confidence", article.get("analysis_confidence", 0))
-            article.setdefault("nlp_reason", "Loaded from cache after relevance validation")
-            article.setdefault("analysis_reason", "Материал прошел проверку по связке ИИ + правовой инструмент + правовое действие")
             articles.append(article)
         articles.sort(
             key=lambda a: (
@@ -590,6 +838,8 @@ def load_cache_from_disk() -> bool:
         with CACHE_LOCK:
             _cache.update(data)
             _cache["loading"] = False
+            _cache["refresh_owner"] = None
+        _cache_file_mtime = CACHE_FILE.stat().st_mtime
         logger.info(f"Кэш загружен с диска: {len(data.get('articles', []))} статей")
         return True
     except Exception as e:
@@ -597,20 +847,70 @@ def load_cache_from_disk() -> bool:
         return False
 
 
+def sync_cache_from_disk_if_changed() -> None:
+    if not CACHE_FILE.exists():
+        return
+    try:
+        disk_mtime = CACHE_FILE.stat().st_mtime
+        with CACHE_LOCK:
+            loading = bool(_cache.get("loading"))
+        if not loading and disk_mtime > _cache_file_mtime:
+            load_cache_from_disk()
+    except OSError:
+        return
 
-def refresh_articles(send_notifications: bool = False, auto_refresh: bool = False) -> None:
+
+
+def refresh_articles(
+    send_notifications: bool = False,
+    auto_refresh: bool = False,
+    owner: str = "system",
+    lock_acquired: bool = False,
+) -> None:
+    if not lock_acquired and not acquire_refresh_lock(owner):
+        logger.info("Обновление не запущено: другой сбор уже выполняется")
+        return
     logger.info("▶ Начало обновления данных...")
     with CACHE_LOCK:
-        _cache["loading"] = True
+        _cache["refresh_status"] = "running"
+        _cache["refresh_error"] = None
+        _cache["refresh_finished_at"] = None
+        previous_articles = list(_cache.get("articles", []))
         previous_links = {
             normalize_article_link(a.get("link", ""))
-            for a in _cache.get("articles", [])
+            for a in previous_articles
             if a.get("link")
         }
     try:
         result = fetch_all_articles(include_diagnostics=True)
-        articles = result.get("articles", []) if isinstance(result, dict) else result
+        fresh_articles = result.get("articles", []) if isinstance(result, dict) else result
         diagnostics = result.get("diagnostics", []) if isinstance(result, dict) else []
+        retained_articles = [
+            validated
+            for article in previous_articles
+            if is_recent_date(article.get("date", ""))
+            for validated in [validate_and_analyze_article(article)]
+            if validated
+        ]
+        history_articles = load_recent_history_articles()
+        articles = deduplicate_articles(
+            list(fresh_articles) + retained_articles + history_articles
+        )
+        articles.sort(
+            key=lambda article: (
+                to_datetime(article.get("date", "")),
+                int(article.get("legal_priority", 1)),
+                int(article.get("relevance_score", 0)),
+            ),
+            reverse=True,
+        )
+        logger.info(
+            "Скользящий архив: новых/повторно найденных %s, из кэша %s, из истории %s, итог %s",
+            len(fresh_articles),
+            len(retained_articles),
+            len(history_articles),
+            len(articles),
+        )
         refresh_time = datetime.now(timezone.utc).isoformat() if auto_refresh else _cache.get("last_auto_refresh")
         save_cache(articles, diagnostics, last_auto_refresh=refresh_time)
         save_update_history(articles, diagnostics, auto_refresh=auto_refresh)
@@ -619,17 +919,35 @@ def refresh_articles(send_notifications: bool = False, auto_refresh: bool = Fals
                 _cache["last_auto_refresh"] = refresh_time
         if send_notifications:
             notify_about_refresh(previous_links, articles, diagnostics)
+        with CACHE_LOCK:
+            _cache["refresh_status"] = "success"
+            _cache["refresh_error"] = None
+            _cache["refresh_finished_at"] = datetime.now(timezone.utc).isoformat()
         logger.info(f"✅ Обновление завершено: {len(articles)} статей")
     except Exception as e:
-        logger.error(f"Ошибка при обновлении: {e}")
         with CACHE_LOCK:
-            _cache["loading"] = False
+            _cache["refresh_status"] = "failed"
+            _cache["refresh_error"] = str(e)[:300]
+            _cache["refresh_finished_at"] = datetime.now(timezone.utc).isoformat()
+        logger.exception("Ошибка при обновлении")
+    finally:
+        release_refresh_lock()
 
 
-def background_refresh(send_notifications: bool = False, auto_refresh: bool = False):
+def background_refresh(
+    send_notifications: bool = False,
+    auto_refresh: bool = False,
+    owner: str = "system",
+    lock_acquired: bool = False,
+):
     t = threading.Thread(
         target=refresh_articles,
-        kwargs={"send_notifications": send_notifications, "auto_refresh": auto_refresh},
+        kwargs={
+            "send_notifications": send_notifications,
+            "auto_refresh": auto_refresh,
+            "owner": owner,
+            "lock_acquired": lock_acquired,
+        },
         daemon=True,
     )
     t.start()
@@ -638,12 +956,15 @@ def background_refresh(send_notifications: bool = False, auto_refresh: bool = Fa
 def weekly_refresh_loop() -> None:
     while True:
         time.sleep(WEEKLY_REFRESH_INTERVAL_SECONDS)
-        with CACHE_LOCK:
-            if _cache.get("loading"):
-                logger.info("Еженедельное обновление пропущено: уже идет сбор")
-                continue
-            _cache["loading"] = True
-        refresh_articles(send_notifications=True, auto_refresh=True)
+        if not acquire_refresh_lock("weekly"):
+            logger.info("Еженедельное обновление пропущено: уже идет сбор")
+            continue
+        refresh_articles(
+            send_notifications=True,
+            auto_refresh=True,
+            owner="weekly",
+            lock_acquired=True,
+        )
 
 
 def start_weekly_refresh_thread() -> None:
@@ -652,10 +973,15 @@ def start_weekly_refresh_thread() -> None:
 
 
 
+@app.route("/robots.txt")
+def robots_txt():
+    return "User-agent: *\nDisallow: /\n", 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html", username=session.get("user"))
+    return render_template("index.html", username=session.get("user"), csrf_token=csrf_token())
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -665,19 +991,31 @@ def login():
 
     error = None
     if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        if username in USERS and verify_password(password, USERS[username]):
+        if not csrf_is_valid():
+            return render_template("login.html", error="Сессия формы устарела. Обновите страницу.", csrf_token=csrf_token()), 400
+        if login_rate_limited():
+            return render_template("login.html", error="Слишком много попыток. Повторите позже.", csrf_token=csrf_token()), 429
+        username = request.form.get("username", "").strip()[:128]
+        password = request.form.get("password", "")[:1024]
+        stored_hash = USERS.get(username, DUMMY_PASSWORD_HASH)
+        password_ok = verify_password(password, stored_hash)
+        if username in USERS and password_ok:
+            clear_login_failures()
+            next_url = safe_next_url(request.args.get("next"))
             session.clear()
             session["user"] = username
-            return redirect(request.args.get("next") or url_for("index"))
+            csrf_token()
+            return redirect(next_url)
+        record_login_failure()
         error = "Неверный логин или пароль"
 
-    return render_template("login.html", error=error)
+    return render_template("login.html", error=error, csrf_token=csrf_token())
 
 
 @app.route("/logout", methods=["POST"])
 def logout():
+    if not csrf_is_valid():
+        return jsonify({"error": "invalid_csrf_token"}), 403
     session.clear()
     return redirect(url_for("login"))
 
@@ -685,6 +1023,7 @@ def logout():
 @app.route("/api/status")
 @login_required
 def api_status():
+    sync_cache_from_disk_if_changed()
     with CACHE_LOCK:
         articles = list(_cache.get("articles", []))
         counts = article_counts(articles)
@@ -696,18 +1035,30 @@ def api_status():
             "monitoring_total": counts["monitoring_total"],
             "sources_count": _cache.get("sources_count", 0),
             "last_auto_refresh": _cache.get("last_auto_refresh"),
+            "refresh_owner": _cache.get("refresh_owner"),
+            "refresh_status": _cache.get("refresh_status", "idle"),
+            "refresh_error": _cache.get("refresh_error"),
+            "refresh_finished_at": _cache.get("refresh_finished_at"),
         })
 
 
 @app.route("/api/articles")
 @login_required
 def api_articles():
+    sync_cache_from_disk_if_changed()
     country = request.args.get("country", "")
     category = request.args.get("category", "")
     query = request.args.get("q", "").lower().strip()
     mode = request.args.get("mode", "strict")
-    page = max(1, int(request.args.get("page", 1)))
-    per_page = min(50, int(request.args.get("per_page", 20)))
+    if mode not in {"strict", "monitoring"}:
+        return jsonify({"error": "invalid_mode"}), 400
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        per_page = int(request.args.get("per_page", 20))
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid_pagination"}), 400
+    if per_page < 1 or per_page > 50:
+        return jsonify({"error": "invalid_per_page", "min": 1, "max": 50}), 400
 
     with CACHE_LOCK:
         articles = split_articles_by_mode(list(_cache.get("articles", [])), mode)
@@ -741,7 +1092,10 @@ def api_articles():
 @app.route("/api/stats")
 @login_required
 def api_stats():
+    sync_cache_from_disk_if_changed()
     mode = request.args.get("mode", "strict")
+    if mode not in {"strict", "monitoring"}:
+        return jsonify({"error": "invalid_mode"}), 400
     with CACHE_LOCK:
         all_articles = list(_cache.get("articles", []))
         counts = article_counts(all_articles)
@@ -772,9 +1126,30 @@ def api_stats():
         })
 
 
+def sanitize_diagnostic_message(message: str) -> str:
+    text = clean_html(str(message or "")).strip()
+    lowered = text.lower()
+    if not text:
+        return "Источник проверен; дополнительных сведений нет."
+    if "403" in lowered or "forbidden" in lowered:
+        return "Источник отклонил автоматический запрос (HTTP 403). Использован резервный способ, если он настроен."
+    if "404" in lowered or "not found" in lowered:
+        return "Страница источника не найдена (HTTP 404); адрес требует проверки."
+    if "410" in lowered:
+        return "Страница источника удалена (HTTP 410); адрес требует замены."
+    if "timeout" in lowered or "timed out" in lowered:
+        return "Источник не ответил за отведенное время. Проверка продолжилась без остановки всего обновления."
+    if "connection" in lowered or "max retries" in lowered or "ssl" in lowered:
+        return "Не удалось установить защищенное соединение с источником."
+    if "empty or broken feed" in lowered:
+        return "Лента источника пуста или имеет неподдерживаемый формат."
+    return text[:300]
+
+
 @app.route("/api/diagnostics")
 @login_required
 def api_diagnostics():
+    sync_cache_from_disk_if_changed()
     source_names = {source["name"] for source in ALL_SOURCES}
     with CACHE_LOCK:
         diagnostics = [
@@ -799,8 +1174,11 @@ def api_diagnostics():
         ]
     for item in diagnostics:
         message = item.get("message", "")
+        item["message"] = sanitize_diagnostic_message(message)
         if item.get("status") == "failed" and any(token in message for token in ("HTTP 403", "HTTP 404", "HTTP 410", "Forbidden", "Not Found", "empty or broken feed")):
             item["status"] = "unavailable"
+        elif item.get("status") == "ok" and int(item.get("accepted_count", 0)) == 0:
+            item["status"] = "no-records"
     status_rank = {"ok": 0, "no-records": 1, "unavailable": 2, "pending": 3, "running": 4, "timeout": 5, "error": 6, "failed": 7}
     diagnostics.sort(key=lambda item: (
         status_rank.get(item.get("status", "ok"), 8),
@@ -830,11 +1208,16 @@ def api_sources():
 @app.route("/api/refresh", methods=["POST"])
 @login_required
 def api_refresh():
-    with CACHE_LOCK:
-        if _cache.get("loading"):
-            return jsonify({"status": "already_loading"}), 200
-        _cache["loading"] = True
-    background_refresh(send_notifications=True)
+    if not csrf_is_valid():
+        return jsonify({"error": "invalid_csrf_token"}), 403
+    owner = session.get("user", "manual")
+    if not acquire_refresh_lock(owner):
+        return jsonify({"status": "already_loading"}), 200
+    background_refresh(
+        send_notifications=True,
+        owner=owner,
+        lock_acquired=True,
+    )
     return jsonify({"status": "started"})
 
 
@@ -870,6 +1253,7 @@ def api_email_status():
 @app.route("/api/filters")
 @login_required
 def api_filters():
+    sync_cache_from_disk_if_changed()
     with CACHE_LOCK:
         articles = _cache.get("articles", [])
     countries = sorted({s["country"] for s in ALL_SOURCES} | {a["country"] for a in articles})
@@ -887,6 +1271,7 @@ if __name__ == "__main__":
     if not has_cache:
         logger.info("Кэш не найден. Автоматический сбор отключен — нажмите «Обновить данные» в интерфейсе.")
 
-    start_weekly_refresh_thread()
+    if os.environ.get("AI_MONITOR_ENABLE_SCHEDULER", "1").lower() in {"1", "true", "yes"}:
+        start_weekly_refresh_thread()
     threading.Timer(1.5, lambda: webbrowser.open_new_tab("http://127.0.0.1:5000")).start()    
-    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
+    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False, threaded=True)
