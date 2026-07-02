@@ -1,5 +1,18 @@
 [
   {
+    "id": "20260702_094839_817874",
+    "created_at": "2026-07-02T09:48:39.817856+00:00",
+    "total": 39,
+    "strict_total": 29,
+    "monitoring_total": 10,
+    "sources_count": 138,
+    "diagnostics_total": 137,
+    "ok_sources": 93,
+    "problem_sources": 44,
+    "excel_file": "update_20260702_094839_817874.xlsx",
+    "auto_refresh": false
+  },
+  {
     "id": "20260620_190224_340868",
     "created_at": "2026-06-20T19:02:24.340856+00:00",
     "total": 31,

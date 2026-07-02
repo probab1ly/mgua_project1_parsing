@@ -253,8 +253,12 @@ select:focus{border-color:var(--accent)}
 .history-view{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--shadow)}
 .history-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
 .history-title{font-size:1rem;font-weight:900;color:var(--text);display:flex;align-items:center;gap:.5rem}
+.history-actions{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:flex-end}
+.history-clear{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(139,26,26,.22);background:#fff;color:var(--accent);border-radius:8px;padding:.6rem .85rem;font-size:.8rem;font-weight:900;cursor:pointer;transition:background-color .24s ease,color .24s ease,border-color .24s ease,box-shadow .24s ease,transform .24s ease}
+.history-clear:hover{background:rgba(139,26,26,.07);border-color:var(--accent);box-shadow:0 8px 18px rgba(139,26,26,.12);transform:translateY(-1px)}
+.history-clear:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
 .history-subtitle{font-size:.8rem;color:var(--text-muted);line-height:1.45;margin-top:.35rem}
-.history-list{display:flex;flex-direction:column;gap:.85rem}
+.history-list{display:flex;flex-direction:column;gap:.85rem;max-height:min(68vh,720px);overflow-y:auto;overscroll-behavior:contain;padding-right:.35rem;scrollbar-gutter:stable}
 .history-item{border:1px solid var(--border);border-radius:12px;padding:1rem;background:#fff;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;transition:border-color .24s ease,box-shadow .24s ease,transform .24s ease}
 .history-item:hover{border-color:rgba(139,26,26,.35);box-shadow:0 10px 24px rgba(0,0,0,.08);transform:translateY(-1px)}
 .history-date{font-weight:900;color:var(--accent);font-size:1rem;margin-bottom:.5rem}
@@ -264,7 +268,7 @@ select:focus{border-color:var(--accent)}
 .history-download{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--accent);background:var(--accent);color:#fff;text-decoration:none;border-radius:8px;padding:.65rem .9rem;font-size:.8rem;font-weight:900;white-space:nowrap;transition:background-color .24s ease,box-shadow .24s ease,transform .24s ease}
 .history-download:hover{background:#741515;box-shadow:0 8px 18px rgba(139,26,26,.2);transform:translateY(-1px)}
 .email-warning{border:1px solid rgba(139,26,26,.18);background:#fff7f7;color:var(--accent);border-radius:12px;padding:.85rem 1rem;font-size:.82rem;font-weight:700;margin-bottom:1rem;line-height:1.45}
-@media(max-width:720px){.history-item{grid-template-columns:1fr}.history-download{width:100%}}
+@media(max-width:720px){.history-item{grid-template-columns:1fr}.history-download,.history-clear{width:100%}.history-actions{width:100%;justify-content:stretch}.history-list{max-height:65vh}}
 
 /* ── SIDEBAR ── */
 .layout{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start}
@@ -468,6 +472,9 @@ button,.filter-tag,.mode-btn,.view-btn,.page-btn,.logout-btn,#refresh-btn,
       <div>
         <h2 class="history-title">📁 История обновлений</h2>
         <div class="history-subtitle">Каждое завершённое обновление сохраняется отдельным Excel-отчётом с материалами, диагностикой источников и сводкой.</div>
+      </div>
+      <div class="history-actions">
+        <button class="history-clear" id="history-clear-btn" type="button" onclick="clearHistory()">Очистить историю</button>
       </div>
     </div>
     <div class="email-warning" id="email-warning" hidden></div>
@@ -744,6 +751,7 @@ function updateModeCounts(total, strictTotal, monitoringTotal, currentTotal) {
 function renderHistory(items) {
   const el = document.getElementById('history-list');
   if(!el) return;
+  updateHistoryClearButton(items.length > 0);
   if(!items.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><p>История появится после первого завершённого обновления данных</p></div>';
     return;
@@ -769,6 +777,30 @@ function renderHistory(items) {
       </div>
     `;
   }).join('');
+}
+
+function updateHistoryClearButton(hasItems) {
+  const btn = document.getElementById('history-clear-btn');
+  if(btn) btn.disabled = !hasItems;
+}
+
+async function clearHistory() {
+  const btn = document.getElementById('history-clear-btn');
+  if(btn && btn.disabled) return;
+  if(!confirm('Очистить всю историю обновлений и связанные Excel-отчёты?')) return;
+  if(btn) { btn.disabled = true; btn.textContent = 'Очистка...'; }
+  try {
+    const response = await fetch('/api/history', {method:'DELETE', headers:{'X-CSRF-Token':CSRF_TOKEN}});
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.json();
+    renderHistory([]);
+    showToast(`История очищена. Удалено записей: ${result.deleted_records || 0}`);
+  } catch(e) {
+    showToast('Не удалось очистить историю обновлений.');
+    updateHistoryClearButton(true);
+  } finally {
+    if(btn) btn.textContent = 'Очистить историю';
+  }
 }
 
 function renderEmailStatus(status) {

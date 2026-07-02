@@ -48,6 +48,31 @@ from scraper import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
+
+def env_bool(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default).lower() in {"1", "true", "yes", "on"}
+
+
+def load_dotenv_file(path: Path = Path(".env")) -> None:
+    """Load local .env values without overriding real hosting environment variables."""
+    if not path.exists():
+        return
+    try:
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+    except OSError as exc:
+        logger.warning("Could not load .env file: %s", exc)
+
+
+load_dotenv_file()
+
 SECRET_KEY_FILE = Path(".ai_monitor_secret")
 
 
@@ -352,6 +377,26 @@ def write_history_index(history: list[dict]) -> None:
     with HISTORY_LOCK:
         temporary.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
         os.replace(temporary, HISTORY_INDEX_FILE)
+
+
+def clear_update_history() -> dict:
+    with HISTORY_LOCK:
+        history = read_history_index()
+        deleted_files = 0
+        failed_files = 0
+        for record in history:
+            filename = str(record.get("excel_file", ""))
+            if not filename or "/" in filename or "\\" in filename:
+                continue
+            file_path = HISTORY_DIR / filename
+            try:
+                if file_path.exists() and file_path.is_file():
+                    file_path.unlink()
+                    deleted_files += 1
+            except OSError:
+                failed_files += 1
+        write_history_index([])
+        return {"deleted_records": len(history), "deleted_files": deleted_files, "failed_files": failed_files}
 
 
 def load_recent_history_articles(limit: int = 5) -> list[dict]:
@@ -978,6 +1023,11 @@ def robots_txt():
     return "User-agent: *\nDisallow: /\n", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
 
+@app.route("/healthz")
+def healthz():
+    return jsonify({"status": "ok"}), 200
+
+
 @app.route("/")
 @login_required
 def index():
@@ -1228,6 +1278,15 @@ def api_history():
     return jsonify({"history": history})
 
 
+@app.route("/api/history", methods=["DELETE"])
+@login_required
+def api_history_clear():
+    if not csrf_is_valid():
+        return jsonify({"error": "invalid_csrf_token"}), 403
+    result = clear_update_history()
+    return jsonify({"status": "cleared", **result})
+
+
 @app.route("/api/history/<record_id>/download")
 @login_required
 def api_history_download(record_id: str):
@@ -1271,7 +1330,12 @@ if __name__ == "__main__":
     if not has_cache:
         logger.info("Кэш не найден. Автоматический сбор отключен — нажмите «Обновить данные» в интерфейсе.")
 
-    if os.environ.get("AI_MONITOR_ENABLE_SCHEDULER", "1").lower() in {"1", "true", "yes"}:
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", "5000"))
+
+    if env_bool("AI_MONITOR_ENABLE_SCHEDULER"):
         start_weekly_refresh_thread()
-    threading.Timer(1.5, lambda: webbrowser.open_new_tab("http://127.0.0.1:5000")).start()    
-    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False, threaded=True)
+    if env_bool("AI_MONITOR_OPEN_BROWSER"):
+        threading.Timer(1.5, lambda: webbrowser.open_new_tab(f"http://127.0.0.1:{port}")).start()
+
+    app.run(host=host, port=port, debug=False, use_reloader=False, threaded=True)

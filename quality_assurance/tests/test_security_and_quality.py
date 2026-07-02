@@ -143,6 +143,11 @@ class AppSecurityTests(unittest.TestCase):
         )
 
 
+    def test_healthz_is_public_and_minimal(self):
+        response = self.client.get("/healthz")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"status": "ok"})
+
     def test_internal_app_is_not_indexed(self):
         response = self.client.get("/robots.txt")
         self.assertEqual(response.status_code, 200)
@@ -244,6 +249,33 @@ class DataQualityTests(unittest.TestCase):
             app.refresh_articles(lock_acquired=True)
         self.assertEqual(app._cache["refresh_status"], "failed")
         self.assertIn("source failure", app._cache["refresh_error"])
+
+    def test_history_clear_requires_csrf_and_removes_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            old_dir = app.HISTORY_DIR
+            old_index = app.HISTORY_INDEX_FILE
+            old_users = dict(app.USERS)
+            try:
+                app.USERS["tester"] = "pbkdf2_sha256$1$00$00"
+                app.HISTORY_DIR = Path(directory)
+                app.HISTORY_INDEX_FILE = Path(directory) / "history.json"
+                report = Path(directory) / "update_test.xlsx"
+                report.write_bytes(b"xlsx")
+                app.write_history_index([{"id": "test", "excel_file": report.name}])
+                client = app.app.test_client()
+                with client.session_transaction() as session:
+                    session["user"] = "tester"
+                    session["_csrf_token"] = "test-csrf"
+                self.assertEqual(client.delete("/api/history").status_code, 403)
+                response = client.delete("/api/history", headers={"X-CSRF-Token": "test-csrf"})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(app.read_history_index(), [])
+                self.assertFalse(report.exists())
+            finally:
+                app.HISTORY_DIR = old_dir
+                app.HISTORY_INDEX_FILE = old_index
+                app.USERS.clear()
+                app.USERS.update(old_users)
 
     def test_history_updates_do_not_lose_records(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -6,5 +6,5 @@ users.json
 email_config.json
 .ai_monitor_secret
 .refresh.lock
-qa_artifacts/
+quality_assurance/artifacts/
 private_credentials.txt

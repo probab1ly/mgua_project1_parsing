@@ -45,7 +45,7 @@ Google и создать новый.
 ## Проверка
 
 ```powershell
-python -m unittest discover -s tests -v
+python -m unittest discover -s quality_assurance/tests -v
 ```
 
 Контрольные проверки покрывают авторизацию, CSRF, ограничение перебора пароля,
