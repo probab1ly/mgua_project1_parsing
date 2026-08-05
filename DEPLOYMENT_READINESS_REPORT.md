@@ -22,7 +22,7 @@
 
 Даже если текущие файлы очищены, старые пароли могли остаться в истории Git. Перед публикацией в публичный репозиторий нужно:
 
-- отозвать старый Gmail app password;
+- отозвать старый Yandex Mail app password;
 - сменить пароли пользователей;
 - проверить историю Git;
 - при необходимости очистить историю через `git filter-repo`.
@@ -61,10 +61,10 @@
 
 ### 5. SMTP
 
-`email_config.json` включает Gmail-отправку, но настоящий пароль должен быть только в переменной окружения:
+`email_config.json` включает отправку через Яндекс.Почту, но настоящий пароль должен быть только в переменной окружения:
 
 ```env
-AI_MONITOR_SMTP_PASSWORD=google-app-password
+AI_MONITOR_SMTP_PASSWORD=yandex-mail-app-password
 ```
 
 Пока переменная не задана, рассылка не будет готова.
@@ -106,10 +106,10 @@ AI_MONITOR_SECRET_KEY=long-random-secret-at-least-32-chars
 AI_MONITOR_HTTPS=1
 AI_MONITOR_PROXY_FIX=1
 
-AI_MONITOR_SMTP_HOST=smtp.gmail.com
-AI_MONITOR_SMTP_PORT=587
-AI_MONITOR_SMTP_USERNAME=your-address@gmail.com
-AI_MONITOR_SMTP_PASSWORD=google-app-password
+AI_MONITOR_SMTP_HOST=smtp.yandex.ru
+AI_MONITOR_SMTP_PORT=465
+AI_MONITOR_SMTP_USERNAME=your-login@yandex.ru
+AI_MONITOR_SMTP_PASSWORD=yandex-mail-app-password
 AI_MONITOR_SMTP_TIMEOUT=90
 
 HOST=0.0.0.0

@@ -10,6 +10,21 @@ from pathlib import Path
 
 
 CONFIG_FILE = Path("email_config.json")
+PLACEHOLDERS = {"your-login@yandex.ru", "your-address@gmail.com", "example@yandex.ru"}
+
+
+def load_dotenv_file(path: Path = Path(".env")) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def load_config() -> dict:
@@ -19,7 +34,11 @@ def load_config() -> dict:
 
 
 def config_value(config: dict, key: str, env_key: str, default=None):
-    return config.get(key) or os.environ.get(env_key) or default
+    for value in (config.get(key), os.environ.get(env_key), default):
+        candidate = str(value or "").strip()
+        if candidate and candidate.lower() not in PLACEHOLDERS:
+            return candidate
+    return None
 
 
 def config_bool(config: dict, key: str, default: bool = False) -> bool:
@@ -49,7 +68,7 @@ def print_connection_help(exc: Exception) -> None:
         print("  - Часто помогает переключение между 465 SSL и 587 STARTTLS.")
         print("  - Иногда исходящий SMTP режет антивирус, корпоративная сеть, Wi-Fi или провайдер.")
     if "Username and Password not accepted" in text or "Application-specific password required" in text:
-        print("  - Для Gmail нужен пароль приложения, а не обычный пароль аккаунта.")
+        print("  - Для Яндекс.Почты нужен пароль приложения для Почты, а не обычный пароль аккаунта.")
     print("")
     print("Что попробовать:")
     print("  1. Если сейчас порт 465: поставьте smtp_port=587, use_tls=true, use_ssl=false.")
@@ -60,6 +79,7 @@ def print_connection_help(exc: Exception) -> None:
 
 
 def main() -> int:
+    load_dotenv_file()
     try:
         config = load_config()
     except Exception as exc:
@@ -68,12 +88,12 @@ def main() -> int:
 
     recipients = [email for email in config.get("recipients", []) if email]
     host = config_value(config, "smtp_host", "AI_MONITOR_SMTP_HOST")
-    port = int(config_value(config, "smtp_port", "AI_MONITOR_SMTP_PORT", 587))
+    port = int(config_value(config, "smtp_port", "AI_MONITOR_SMTP_PORT", 465))
     username = config_value(config, "smtp_username", "AI_MONITOR_SMTP_USERNAME")
     password = config_value(config, "smtp_password", "AI_MONITOR_SMTP_PASSWORD")
     sender = config_value(config, "from_email", "AI_MONITOR_FROM_EMAIL") or username
-    use_tls = config_bool(config, "use_tls", True)
-    use_ssl = config_bool(config, "use_ssl", False) or config_bool(config, "smtp_ssl", False)
+    use_tls = config_bool(config, "use_tls", False)
+    use_ssl = config_bool(config, "use_ssl", True) or config_bool(config, "smtp_ssl", False)
     timeout = int(config_value(config, "timeout", "AI_MONITOR_SMTP_TIMEOUT", 45))
 
     missing = []
@@ -95,7 +115,7 @@ def main() -> int:
         return 1
 
     msg = EmailMessage()
-    msg["Subject"] = "AI Regulation Monitor: SMTP test"
+    msg["Subject"] = "AI Regulation Monitor: Yandex SMTP test"
     msg["From"] = sender
     msg["To"] = ", ".join(recipients)
     msg.set_content(

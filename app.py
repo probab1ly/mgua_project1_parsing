@@ -111,6 +111,12 @@ CACHE_FILE = Path("cache.json")
 CACHE_TEMP_FILE = Path("cache.json.tmp")
 USERS_FILE = Path("users.json")
 EMAIL_CONFIG_FILE = Path("email_config.json")
+EMAIL_PLACEHOLDERS = {
+    "your-login@yandex.ru",
+    "your-address@gmail.com",
+    "example@yandex.ru",
+    "replace-with-email",
+}
 HISTORY_DIR = Path("update_history")
 HISTORY_INDEX_FILE = HISTORY_DIR / "history.json"
 REFRESH_LOCK_FILE = Path(".refresh.lock")
@@ -457,13 +463,35 @@ def load_recent_history_articles(limit: int = 5) -> list[dict]:
     return deduplicate_articles(restored)
 
 
+def configured_email_value(*values) -> str:
+    for value in values:
+        candidate = str(value or "").strip()
+        if candidate and candidate.lower() not in EMAIL_PLACEHOLDERS:
+            return candidate
+    return ""
+
+
+def smtp_security_settings(config: dict, port: int) -> tuple[bool, bool]:
+    env_ssl = os.environ.get("AI_MONITOR_SMTP_SSL")
+    env_tls = os.environ.get("AI_MONITOR_SMTP_TLS")
+    use_ssl = config_bool(config, "use_ssl", port == 465) or config_bool(config, "smtp_ssl", False)
+    if env_ssl is not None:
+        use_ssl = env_bool("AI_MONITOR_SMTP_SSL")
+    use_tls = config_bool(config, "use_tls", not use_ssl)
+    if env_tls is not None:
+        use_tls = env_bool("AI_MONITOR_SMTP_TLS")
+    if use_ssl:
+        use_tls = False
+    return use_tls, use_ssl
+
+
 def email_status_payload() -> dict:
     config = load_email_config()
     recipients = [r for r in config.get("recipients", []) if r]
-    host = config.get("smtp_host") or os.environ.get("AI_MONITOR_SMTP_HOST")
-    username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
-    sender = config.get("from_email") or username
-    password = os.environ.get("AI_MONITOR_SMTP_PASSWORD")
+    host = configured_email_value(config.get("smtp_host"), os.environ.get("AI_MONITOR_SMTP_HOST"))
+    username = configured_email_value(config.get("smtp_username"), os.environ.get("AI_MONITOR_SMTP_USERNAME"))
+    sender = configured_email_value(config.get("from_email"), os.environ.get("AI_MONITOR_FROM_EMAIL"), username)
+    password = configured_email_value(os.environ.get("AI_MONITOR_SMTP_PASSWORD"))
     return {
         "enabled": bool(config.get("enabled")),
         "recipients": recipients,
@@ -502,16 +530,15 @@ def send_email_notification(subject: str, body: str) -> bool:
     if not config.get("enabled") or not recipients:
         return False
 
-    host = config.get("smtp_host") or os.environ.get("AI_MONITOR_SMTP_HOST")
-    port = int(config.get("smtp_port") or os.environ.get("AI_MONITOR_SMTP_PORT", "587"))
-    username = config.get("smtp_username") or os.environ.get("AI_MONITOR_SMTP_USERNAME")
-    password = os.environ.get("AI_MONITOR_SMTP_PASSWORD")
-    sender = config.get("from_email") or username
-    use_tls = config_bool(config, "use_tls", True)
-    use_ssl = config_bool(config, "use_ssl", False) or config_bool(config, "smtp_ssl", False)
-    timeout = int(config.get("timeout") or os.environ.get("AI_MONITOR_SMTP_TIMEOUT", "45"))
-    if not host or not sender:
-        logger.warning("Email не отправлен: не указан SMTP host/from_email")
+    host = configured_email_value(config.get("smtp_host"), os.environ.get("AI_MONITOR_SMTP_HOST"))
+    port = int(config.get("smtp_port") or os.environ.get("AI_MONITOR_SMTP_PORT", "465"))
+    username = configured_email_value(config.get("smtp_username"), os.environ.get("AI_MONITOR_SMTP_USERNAME"))
+    password = configured_email_value(os.environ.get("AI_MONITOR_SMTP_PASSWORD"))
+    sender = configured_email_value(config.get("from_email"), os.environ.get("AI_MONITOR_FROM_EMAIL"), username)
+    use_tls, use_ssl = smtp_security_settings(config, port)
+    timeout = int(config.get("timeout") or os.environ.get("AI_MONITOR_SMTP_TIMEOUT", "90"))
+    if not host or not sender or not username or not password:
+        logger.warning("Email не отправлен: не заполнены SMTP host/from_email/username/password")
         return False
 
     msg = EmailMessage()
@@ -1272,6 +1299,7 @@ def api_refresh():
 
 
 @app.route("/api/history")
+
 @login_required
 def api_history():
     history = read_history_index()

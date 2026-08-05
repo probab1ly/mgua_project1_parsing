@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -193,6 +194,75 @@ class DataQualityTests(unittest.TestCase):
             self.assertEqual(sheet["H2"].data_type, "s")
             self.assertTrue(sheet["H2"].value.startswith("'="))
             self.assertTrue(sheet["I2"].value.startswith("'+"))
+
+
+    def test_yandex_email_placeholders_are_not_ready(self):
+        old_config = app.EMAIL_CONFIG_FILE
+        try:
+            with tempfile.TemporaryDirectory() as directory, patch.dict(
+                os.environ,
+                {"AI_MONITOR_SMTP_PASSWORD": "test-password"},
+                clear=False,
+            ):
+                config = Path(directory) / "email_config.json"
+                config.write_text(
+                    json.dumps(
+                        {
+                            "enabled": True,
+                            "smtp_host": "smtp.yandex.ru",
+                            "smtp_port": 465,
+                            "smtp_username": "your-login@yandex.ru",
+                            "from_email": "your-login@yandex.ru",
+                            "use_ssl": True,
+                            "use_tls": False,
+                            "recipients": ["receiver@example.test"],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                app.EMAIL_CONFIG_FILE = config
+                status = app.email_status_payload()
+                self.assertFalse(status["smtp_username_set"])
+                self.assertFalse(status["from_email_set"])
+                self.assertFalse(status["ready"])
+        finally:
+            app.EMAIL_CONFIG_FILE = old_config
+
+    def test_yandex_email_uses_ssl_without_starttls(self):
+        old_config = app.EMAIL_CONFIG_FILE
+        try:
+            with tempfile.TemporaryDirectory() as directory, patch.dict(
+                os.environ,
+                {"AI_MONITOR_SMTP_PASSWORD": "app-password"},
+                clear=False,
+            ):
+                config = Path(directory) / "email_config.json"
+                config.write_text(
+                    json.dumps(
+                        {
+                            "enabled": True,
+                            "smtp_host": "smtp.yandex.ru",
+                            "smtp_port": 465,
+                            "smtp_username": "sender@yandex.ru",
+                            "from_email": "sender@yandex.ru",
+                            "use_ssl": True,
+                            "use_tls": False,
+                            "recipients": ["receiver@example.test"],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                app.EMAIL_CONFIG_FILE = config
+                with patch.object(app.smtplib, "SMTP_SSL") as smtp_ssl, patch.object(app.smtplib, "SMTP") as smtp:
+                    server = smtp_ssl.return_value.__enter__.return_value
+                    self.assertTrue(app.send_email_notification("Subject", "Body"))
+                    smtp.assert_not_called()
+                    smtp_ssl.assert_called_once()
+                    server.starttls.assert_not_called()
+                    server.login.assert_called_once_with("sender@yandex.ru", "app-password")
+                    server.send_message.assert_called_once()
+        finally:
+            app.EMAIL_CONFIG_FILE = old_config
 
     def test_cache_reclassifies_and_drops_irrelevant_article(self):
         valid = {
