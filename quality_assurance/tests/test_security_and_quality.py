@@ -201,7 +201,11 @@ class DataQualityTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as directory, patch.dict(
                 os.environ,
-                {"AI_MONITOR_SMTP_PASSWORD": "test-password"},
+                {
+                    "AI_MONITOR_SMTP_PASSWORD": "test-password",
+                    "AI_MONITOR_SMTP_USERNAME": "",
+                    "AI_MONITOR_FROM_EMAIL": "",
+                },
                 clear=False,
             ):
                 config = Path(directory) / "email_config.json"

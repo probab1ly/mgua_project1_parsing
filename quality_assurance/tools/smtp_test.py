@@ -9,11 +9,13 @@ from email.message import EmailMessage
 from pathlib import Path
 
 
-CONFIG_FILE = Path("email_config.json")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = Path(os.environ.get("AI_MONITOR_DATA_DIR", PROJECT_ROOT / "data"))
+CONFIG_FILE = DATA_DIR / "email_config.json"
 PLACEHOLDERS = {"your-login@yandex.ru", "your-address@gmail.com", "example@yandex.ru"}
 
 
-def load_dotenv_file(path: Path = Path(".env")) -> None:
+def load_dotenv_file(path: Path = PROJECT_ROOT / ".env") -> None:
     if not path.exists():
         return
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -29,7 +31,7 @@ def load_dotenv_file(path: Path = Path(".env")) -> None:
 
 def load_config() -> dict:
     if not CONFIG_FILE.exists():
-        raise FileNotFoundError("Файл email_config.json не найден")
+        raise FileNotFoundError(f"Файл email_config.json не найден: {CONFIG_FILE}")
     return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
 
 

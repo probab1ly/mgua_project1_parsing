@@ -4,9 +4,11 @@ from datetime import datetime
 from pathlib import Path
 
 
-CACHE_FILE = Path("cache.json")
-MD_FILE = Path("PARSED_LINKS.md")
-CSV_FILE = Path("PARSED_LINKS.csv")
+ROOT = Path(__file__).resolve().parents[1]
+CACHE_FILE = ROOT / "data" / "cache.json"
+OUTPUT_DIR = ROOT / "docs"
+MD_FILE = OUTPUT_DIR / "PARSED_LINKS.md"
+CSV_FILE = OUTPUT_DIR / "PARSED_LINKS.csv"
 
 
 def clean(value):
@@ -14,6 +16,7 @@ def clean(value):
 
 
 def main():
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     if not CACHE_FILE.exists():
         MD_FILE.write_text(
             "# Ссылки после парсинга\n\n"
