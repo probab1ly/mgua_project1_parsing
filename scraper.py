@@ -34,7 +34,7 @@ MAX_WORKERS = 8
 COLLECT_TIMEOUT = 180
 # Берем материалы минимум за последний год, с небольшим запасом для важных
 # актов на границе периода (например, начало июня 2025 при проверке в июне 2026).
-RECENT_DAYS = 400
+RECENT_DAYS = 1825
 
 STRICT_MODE = "strict"
 MONITORING_MODE = "monitoring"
@@ -409,14 +409,19 @@ ALLOWED_SOURCE_DOMAINS = {
 
 
 def hostname(url: str) -> str:
-    return urllib.parse.urlparse(url).netloc.lower()
+    host = urllib.parse.urlparse(url).netloc.lower()
+    return host[4:] if host.startswith("www.") else host
 
 
 def is_allowed_source_url(url: str) -> bool:
     if not is_valid_url(url):
         return False
     host = hostname(url)
-    return any(host == domain or host.endswith("." + domain) for domain in ALLOWED_SOURCE_DOMAINS)
+    return any(
+        host == (domain[4:] if domain.startswith("www.") else domain)
+        or host.endswith("." + (domain[4:] if domain.startswith("www.") else domain))
+        for domain in ALLOWED_SOURCE_DOMAINS
+    )
 
 
 def request_timeout_for(url: str) -> int:
@@ -1645,7 +1650,7 @@ OFFICIAL_PAGE_SOURCES = [
         "date": "2026-06-01",
     },
     {
-        "name": "EU AI Act Service Desk",
+        "name": "EU AI Act Service Desk — сообщение о запуске",
         "url": "https://digital-strategy.ec.europa.eu/en/news/commission-launches-ai-act-service-desk-and-single-information-platform-support-ai-act",
         "country": "EU",
         "flag": "🇪🇺",
@@ -2933,7 +2938,113 @@ OFFICIAL_PAGE_SOURCES.extend([
     },
 ])
 
+
+# Keep the active source set focused on official, high-value jurisdictions.
+# The full project can still be extended above, but these rules prevent the UI
+# and diagnostics from being overloaded by duplicative EU country searches,
+# all 50 US state portals, commercial legal digests, and low-yield regional pages.
+DISABLED_COUNTRIES = {
+    "African Union",
+    "Israel",
+    "Saudi Arabia",
+    "UAE",
+    "Colombia",
+    "Mexico",
+    "Chile",
+    "France",
+    "Germany",
+    "Spain",
+    "Italy",
+    "Netherlands",
+    "South Africa",
+    "Kenya",
+}
+
+DISABLED_SOURCE_NAMES = {
+    "DataGuidance – Artificial Intelligence",
+    "IAPP – AI Governance Search",
+}
+
+DISABLED_SOURCE_PREFIXES = (
+    "USA Alabama Legislature AI",
+    "USA Alaska Legislature AI",
+    "USA Arizona Legislature AI",
+    "USA Arkansas Legislature AI",
+    "USA Connecticut Legislature AI",
+    "USA Delaware Legislature AI",
+    "USA Florida Legislature AI",
+    "USA Georgia Legislature AI",
+    "USA Hawaii Legislature AI",
+    "USA Idaho Legislature AI",
+    "USA Illinois Legislature AI",
+    "USA Indiana Legislature AI",
+    "USA Iowa Legislature AI",
+    "USA Kansas Legislature AI",
+    "USA Kentucky Legislature AI",
+    "USA Louisiana Legislature AI",
+    "USA Maine Legislature AI",
+    "USA Maryland Legislature AI",
+    "USA Massachusetts Legislature AI",
+    "USA Michigan Legislature AI",
+    "USA Minnesota Legislature AI",
+    "USA Mississippi Legislature AI",
+    "USA Missouri Legislature AI",
+    "USA Montana Legislature AI",
+    "USA Nebraska Legislature AI",
+    "USA Nevada Legislature AI",
+    "USA New Hampshire Legislature AI",
+    "USA New Jersey Legislature AI",
+    "USA New Mexico Legislature AI",
+    "USA North Carolina Legislature AI",
+    "USA North Dakota Legislature AI",
+    "USA Ohio Legislature AI",
+    "USA Oklahoma Legislature AI",
+    "USA Oregon Legislature AI",
+    "USA Pennsylvania Legislature AI",
+    "USA Rhode Island Legislature AI",
+    "USA South Carolina Legislature AI",
+    "USA South Dakota Legislature AI",
+    "USA Tennessee Legislature AI",
+    "USA Texas Legislature AI",
+    "USA Utah Legislature AI",
+    "USA Vermont Legislature AI",
+    "USA Virginia Legislature AI",
+    "USA Washington Legislature AI",
+    "USA West Virginia Legislature AI",
+    "USA Wisconsin Legislature AI",
+    "USA Wyoming Legislature AI",
+)
+
+
+def active_source(source: dict) -> bool:
+    name = source.get("name", "")
+    country = source.get("country", "")
+    if country in DISABLED_COUNTRIES:
+        return False
+    if name in DISABLED_SOURCE_NAMES:
+        return False
+    if any(name.startswith(prefix) for prefix in DISABLED_SOURCE_PREFIXES):
+        return False
+    return True
+
+
+RSS_SOURCES = [source for source in RSS_SOURCES if active_source(source)]
+HTML_SEARCH_SOURCES = [source for source in HTML_SEARCH_SOURCES if active_source(source)]
+DIRECT_SEARCH_SOURCES = [source for source in DIRECT_SEARCH_SOURCES if active_source(source)]
+OFFICIAL_PAGE_SOURCES = [source for source in OFFICIAL_PAGE_SOURCES if active_source(source)]
+
 ALL_SOURCES = RSS_SOURCES + HTML_SEARCH_SOURCES + DIRECT_SEARCH_SOURCES + OFFICIAL_PAGE_SOURCES
+ALLOWED_SOURCE_DOMAINS = {
+    hostname(source.get("url", ""))
+    for source in ALL_SOURCES
+    if source.get("url") and urllib.parse.urlparse(source.get("url", "")).netloc
+}
+ALLOWED_SOURCE_DOMAINS.update({
+    "eur-lex.europa.eu",
+    "congress.gov",
+    "federalregister.gov",
+    "loc.gov",
+})
 
 
 def extract_page_date(soup: BeautifulSoup, *fallback_parts: str) -> str:

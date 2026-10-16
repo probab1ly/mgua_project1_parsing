@@ -408,8 +408,8 @@ button,.filter-tag,.mode-btn,.view-btn,.page-btn,.logout-btn,#refresh-btn,
       <label class="sr-only" for="search-input">Поиск по материалам</label>
       <input type="text" id="search-input" maxlength="500" aria-label="Поиск по материалам" placeholder="Поиск по заголовку, тексту..." oninput="debounceSearch()"/>
     </div>
-    <select id="country-filter" aria-label="Фильтр по стране или региону" onchange="applyCountryFilter()">
-      <option value="">Все страны</option>
+    <select id="country-filter" aria-label="Фильтр по юрисдикции" onchange="applyCountryFilter()">
+      <option value="">Все юрисдикции</option>
     </select>
     <select id="category-filter" aria-label="Фильтр по категории" onchange="applyCategoryFilter()">
       <option value="">Все категории</option>
@@ -493,7 +493,7 @@ button,.filter-tag,.mode-btn,.view-btn,.page-btn,.logout-btn,#refresh-btn,
 
 <script>
 const CSRF_TOKEN = {{ csrf_token|tojson }};
-const FLAGS = {EU:'🇪🇺',USA:'🇺🇸',UK:'🇬🇧',Canada:'🇨🇦',Australia:'🇦🇺',Singapore:'🇸🇬',Japan:'🇯🇵','South Korea':'🇰🇷',Brazil:'🇧🇷',China:'🇨🇳',Global:'🌐',OECD:'🌐',UNESCO:'🌐'};
+const FLAGS = {ЕС:'🇪🇺',США:'🇺🇸',Великобритания:'🇬🇧',Канада:'🇨🇦',Австралия:'🇦🇺',Сингапур:'🇸🇬',Япония:'🇯🇵','Республика Корея':'🇰🇷',Китай:'🇨🇳',Индия:'🇮🇳',Бразилия:'🇧🇷','Новая Зеландия':'🇳🇿','Международный уровень':'🌐',EU:'🇪🇺',USA:'🇺🇸',UK:'🇬🇧',Canada:'🇨🇦',Australia:'🇦🇺',Singapore:'🇸🇬',Japan:'🇯🇵','South Korea':'🇰🇷',Brazil:'🇧🇷',China:'🇨🇳',India:'🇮🇳',Global:'🌐',OECD:'🌐',UNESCO:'🌐'};
 let currentPage = 1, totalPages = 1, searchTimer = null;
 let currentFilter = {type: '', value: ''};
 let currentMode = 'strict';
@@ -572,7 +572,7 @@ async function fetchFilters() {
     const d = await r.json();
     const cs = document.getElementById('country-filter');
     const cat = document.getElementById('category-filter');
-    cs.innerHTML = '<option value="">Все страны</option>';
+    cs.innerHTML = '<option value="">Все юрисдикции</option>';
     cat.innerHTML = '<option value="">Все категории</option>';
     (d.countries||[]).forEach(c => {
       const o = document.createElement('option'); o.value=c; o.textContent=(FLAGS[c]||'')+ ' '+c;
@@ -593,8 +593,8 @@ async function fetchSources() {
     const el = document.getElementById('source-list');
     el.innerHTML = (d.sources||[]).map(s => `
       <div class="source-item">
-        <span class="source-flag">${s.flag}</span>
-        <span class="source-label" title="${escHtml(s.description || s.name)}">${escHtml(s.country)} · ${escHtml(s.name)}</span>
+        <span class="source-flag" title="${escHtml(s.country)}">${s.flag || FLAGS[s.country] || '🌐'}</span>
+        <span class="source-label" title="${escHtml(s.description || s.name)}">${escHtml(s.name)}</span>
       </div>
     `).join('');
   } catch(e){}

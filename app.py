@@ -42,6 +42,7 @@ from scraper import (
     OFFICIAL_PAGE_SOURCES,
     clean_html,
     date_temporal_status,
+    active_source,
 )
 
 
@@ -71,9 +72,13 @@ def load_dotenv_file(path: Path = Path(".env")) -> None:
         logger.warning("Could not load .env file: %s", exc)
 
 
-load_dotenv_file()
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = Path(os.environ.get("AI_MONITOR_DATA_DIR", BASE_DIR / "data"))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-SECRET_KEY_FILE = Path(".ai_monitor_secret")
+load_dotenv_file(BASE_DIR / ".env")
+
+SECRET_KEY_FILE = DATA_DIR / ".ai_monitor_secret"
 
 
 def load_secret_key() -> str:
@@ -107,21 +112,21 @@ app.config.update(
     MAX_FORM_PARTS=20,
 )
 
-CACHE_FILE = Path("cache.json")
-CACHE_TEMP_FILE = Path("cache.json.tmp")
-USERS_FILE = Path("users.json")
-EMAIL_CONFIG_FILE = Path("email_config.json")
+CACHE_FILE = DATA_DIR / "cache.json"
+CACHE_TEMP_FILE = DATA_DIR / "cache.json.tmp"
+USERS_FILE = DATA_DIR / "users.json"
+EMAIL_CONFIG_FILE = DATA_DIR / "email_config.json"
 EMAIL_PLACEHOLDERS = {
     "your-login@yandex.ru",
     "your-address@gmail.com",
     "example@yandex.ru",
     "replace-with-email",
 }
-HISTORY_DIR = Path("update_history")
+HISTORY_DIR = DATA_DIR / "update_history"
 HISTORY_INDEX_FILE = HISTORY_DIR / "history.json"
-REFRESH_LOCK_FILE = Path(".refresh.lock")
+REFRESH_LOCK_FILE = DATA_DIR / ".refresh.lock"
 REFRESH_LOCK_STALE_SECONDS = 15 * 60
-CACHE_VERSION = 13
+CACHE_VERSION = 14
 CACHE_LOCK = threading.Lock()
 HISTORY_LOCK = threading.RLock()
 LOGIN_RATE_LOCK = threading.Lock()
@@ -223,10 +228,87 @@ def neutralize_spreadsheet_value(value):
 OFFICIAL_SOURCE_NAMES = {source["name"] for source in OFFICIAL_PAGE_SOURCES}
 SOURCE_BY_NAME = {source["name"]: source for source in ALL_SOURCES}
 
+EU_COUNTRIES = {"EU", "France", "Germany", "Spain", "Italy", "Netherlands", "Ireland", "Belgium", "Poland", "Sweden", "Finland", "Denmark", "Austria"}
+GLOBAL_ORGANIZATIONS = {"Global", "OECD", "UNESCO", "Council of Europe", "WIPO", "United Nations", "UN", "African Union"}
+
+JURISDICTION_LABELS = {
+    "EU": "ЕС",
+    "USA": "США",
+    "UK": "Великобритания",
+    "Canada": "Канада",
+    "Australia": "Австралия",
+    "Singapore": "Сингапур",
+    "Japan": "Япония",
+    "South Korea": "Республика Корея",
+    "China": "Китай",
+    "India": "Индия",
+    "Brazil": "Бразилия",
+    "New Zealand": "Новая Зеландия",
+}
+
+JURISDICTION_ORDER = {
+    "ЕС": 0,
+    "США": 1,
+    "Великобритания": 2,
+    "Канада": 3,
+    "Австралия": 4,
+    "Сингапур": 5,
+    "Япония": 6,
+    "Республика Корея": 7,
+    "Китай": 8,
+    "Индия": 9,
+    "Бразилия": 10,
+    "Новая Зеландия": 11,
+    "Международный уровень": 12,
+}
+
+
+def display_region(country: str | None) -> str:
+    """Return a concise user-facing jurisdiction without changing stored source metadata."""
+    value = (country or "Global").strip()
+    if value in EU_COUNTRIES:
+        return "ЕС"
+    if value in GLOBAL_ORGANIZATIONS:
+        return "Международный уровень"
+    return JURISDICTION_LABELS.get(value, value)
+
+
+def region_sort_key(region: str) -> tuple[int, str]:
+    return (JURISDICTION_ORDER.get(region, 99), region)
+
+
+def article_for_response(article: dict) -> dict:
+    item = dict(article)
+    raw_country = item.get("country", "Global")
+    item["raw_country"] = raw_country
+    item["country"] = display_region(raw_country)
+    item["display_country"] = item["country"]
+    return item
+
+
+def source_for_response(source: dict) -> dict:
+    item = dict(source)
+    raw_country = item.get("country", "Global")
+    item["raw_country"] = raw_country
+    item["country"] = display_region(raw_country)
+    item["display_country"] = item["country"]
+    return item
+
+
+def article_matches_region(article: dict, selected_region: str) -> bool:
+    raw_country = article.get("country", "")
+    return raw_country == selected_region or display_region(raw_country) == selected_region
+
+
+def get_display_stats(articles: list[dict]) -> dict:
+    return get_stats([article_for_response(article) for article in articles])
+
 
 def validate_and_analyze_article(article: dict) -> dict | None:
     source_name = article.get("source", "")
     source = SOURCE_BY_NAME.get(source_name, {})
+    if source_name and not active_source({"name": source_name, "country": article.get("country", "")}):
+        return None
     title = source.get("title") or clean_html(article.get("title", ""))
     summary = clean_html(article.get("summary", ""))
     link = article.get("link", "")
@@ -895,6 +977,7 @@ def load_cache_from_disk() -> bool:
                 legal_priority(article.get("title", ""), article.get("summary", "")),
             )
             articles.append(article)
+        cache_was_normalized = len(articles) != len(data.get("articles", []))
         articles.sort(
             key=lambda a: (
                 to_datetime(a.get("date", "")),
@@ -907,6 +990,13 @@ def load_cache_from_disk() -> bool:
         data["stats"] = get_stats(articles)
         data["sources_count"] = len(ALL_SOURCES)
         data.setdefault("diagnostics", [])
+        if cache_was_normalized:
+            normalized_payload = dict(data)
+            CACHE_TEMP_FILE.write_text(
+                json.dumps(normalized_payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            os.replace(CACHE_TEMP_FILE, CACHE_FILE)
         with CACHE_LOCK:
             _cache.update(data)
             _cache["loading"] = False
@@ -1142,7 +1232,7 @@ def api_articles():
 
     # Фильтрация
     if country:
-        articles = [a for a in articles if a.get("country") == country]
+        articles = [a for a in articles if article_matches_region(a, country)]
     if category:
         articles = [a for a in articles if a.get("category") == category]
     if query:
@@ -1155,7 +1245,7 @@ def api_articles():
     total = len(articles)
     start = (page - 1) * per_page
     end = start + per_page
-    page_articles = articles[start:end]
+    page_articles = [article_for_response(article) for article in articles[start:end]]
 
     return jsonify({
         "articles": page_articles,
@@ -1177,20 +1267,21 @@ def api_stats():
         all_articles = list(_cache.get("articles", []))
         counts = article_counts(all_articles)
         articles = split_articles_by_mode(all_articles, mode)
-        stats = get_stats(articles)
-        all_stats = get_stats(all_articles)
+        stats = get_display_stats(articles)
+        all_stats = get_display_stats(all_articles)
         countries = dict(stats.get("countries", {}))
         categories = dict(stats.get("categories", {}))
         all_countries = dict(all_stats.get("countries", {}))
         all_categories = dict(all_stats.get("categories", {}))
         for source in ALL_SOURCES:
-            countries.setdefault(source["country"], 0)
+            region = display_region(source.get("country"))
+            countries.setdefault(region, 0)
             categories.setdefault(source["category"], 0)
-            all_countries.setdefault(source["country"], 0)
+            all_countries.setdefault(region, 0)
             all_categories.setdefault(source["category"], 0)
-        stats["countries"] = dict(sorted(countries.items(), key=lambda x: (-x[1], x[0])))
+        stats["countries"] = dict(sorted(countries.items(), key=lambda x: (-x[1], region_sort_key(x[0]))))
         stats["categories"] = dict(sorted(categories.items(), key=lambda x: (-x[1], x[0])))
-        all_stats["countries"] = dict(sorted(all_countries.items(), key=lambda x: (-x[1], x[0])))
+        all_stats["countries"] = dict(sorted(all_countries.items(), key=lambda x: (-x[1], region_sort_key(x[0]))))
         all_stats["categories"] = dict(sorted(all_categories.items(), key=lambda x: (-x[1], x[0])))
         return jsonify({
             "stats": stats,
@@ -1272,7 +1363,8 @@ def api_sources():
         "sources": [
             {
                 "name": s["name"],
-                "country": s["country"],
+                "country": display_region(s.get("country")),
+                "raw_country": s["country"],
                 "flag": s["flag"],
                 "category": s["category"],
                 "description": s["description"],
@@ -1343,7 +1435,10 @@ def api_filters():
     sync_cache_from_disk_if_changed()
     with CACHE_LOCK:
         articles = _cache.get("articles", [])
-    countries = sorted({s["country"] for s in ALL_SOURCES} | {a["country"] for a in articles})
+    countries = sorted(
+        {display_region(s.get("country")) for s in ALL_SOURCES} | {display_region(a.get("country")) for a in articles},
+        key=region_sort_key,
+    )
     categories = sorted({s["category"] for s in ALL_SOURCES} | {a["category"] for a in articles})
     return jsonify({"countries": countries, "categories": categories})
 
