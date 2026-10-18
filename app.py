@@ -545,6 +545,49 @@ def load_recent_history_articles(limit: int = 5) -> list[dict]:
     return deduplicate_articles(restored)
 
 
+def load_history_article_links(limit: int = 100) -> set[str]:
+    """Возвращает ссылки из предыдущих отчётов для точного подсчёта новинок.
+
+    История хранится отдельно от рабочего кэша. Сравнение только с кэшем
+    превращало в «новые» уже известные материалы, когда кэш очищался или
+    нормализовался после изменения фильтра. Этот набор строится до записи
+    очередного отчёта и поэтому не включает материалы текущего запуска.
+    """
+    links: set[str] = set()
+    for record in read_history_index()[:limit]:
+        filename = str(record.get("excel_file", ""))
+        if not filename or "/" in filename or "\\" in filename:
+            continue
+        path = HISTORY_DIR / filename
+        if not path.exists():
+            continue
+        try:
+            workbook = load_workbook(path, read_only=True, data_only=True)
+            if "Материалы" not in workbook.sheetnames:
+                workbook.close()
+                continue
+            sheet = workbook["Материалы"]
+            headers = {
+                cell.value: index
+                for index, cell in enumerate(sheet[1])
+                if cell.value
+            }
+            url_index = headers.get("URL")
+            if url_index is None:
+                workbook.close()
+                continue
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                if url_index >= len(row):
+                    continue
+                link = normalize_article_link(str(row[url_index] or ""))
+                if link:
+                    links.add(link)
+            workbook.close()
+        except Exception as exc:
+            logger.warning("Не удалось прочитать ссылки из исторического отчёта %s: %s", path, exc)
+    return links
+
+
 def restore_latest_diagnostics_from_history(limit: int = 5) -> list[dict]:
     """Восстанавливает последний снимок диагностики из Excel-истории.
 
@@ -1136,6 +1179,7 @@ def refresh_articles(
             for a in previous_articles
             if a.get("link")
         }
+    previous_links.update(load_history_article_links())
     try:
         result = fetch_all_articles(include_diagnostics=True)
         fresh_articles = result.get("articles", []) if isinstance(result, dict) else result

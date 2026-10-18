@@ -352,6 +352,40 @@ class DataQualityTests(unittest.TestCase):
                 app.HISTORY_DIR = old_dir
                 app.HISTORY_INDEX_FILE = old_index
 
+    def test_history_links_prevent_old_materials_from_being_reported_as_new(self):
+        with tempfile.TemporaryDirectory() as directory:
+            old_dir = app.HISTORY_DIR
+            old_index = app.HISTORY_INDEX_FILE
+            try:
+                app.HISTORY_DIR = Path(directory)
+                app.HISTORY_INDEX_FILE = app.HISTORY_DIR / "history.json"
+                report = app.HISTORY_DIR / "update_test.xlsx"
+                workbook = app.Workbook()
+                sheet = workbook.active
+                sheet.title = "Материалы"
+                sheet.append(["URL"])
+                sheet.append(["https://www.nist.gov/news-events/news/known-ai-rule"])
+                workbook.save(report)
+                app.write_history_index([{"id": "test", "excel_file": report.name}])
+
+                known_link = "https://www.nist.gov/news-events/news/known-ai-rule"
+                history_links = app.load_history_article_links()
+                self.assertIn(known_link, history_links)
+
+                articles = [
+                    {"title": "Already known", "summary": "", "link": known_link},
+                    {"title": "New rule", "summary": "", "link": "https://www.nist.gov/news-events/news/new-ai-rule"},
+                ]
+                with patch.object(app, "send_email_notification", return_value=True) as send:
+                    app.notify_about_refresh(history_links, articles, [])
+                body = send.call_args.args[1]
+                self.assertIn("Новых материалов: 1.", body)
+                self.assertIn("New rule", body)
+                self.assertNotIn("Already known", body)
+            finally:
+                app.HISTORY_DIR = old_dir
+                app.HISTORY_INDEX_FILE = old_index
+
     def test_refresh_failure_is_exposed(self):
         with patch.object(app, "fetch_all_articles", side_effect=RuntimeError("source failure")), patch.object(
             app, "release_refresh_lock"
