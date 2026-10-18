@@ -545,6 +545,92 @@ def load_recent_history_articles(limit: int = 5) -> list[dict]:
     return deduplicate_articles(restored)
 
 
+def restore_latest_diagnostics_from_history(limit: int = 5) -> list[dict]:
+    """Восстанавливает последний снимок диагностики из Excel-истории.
+
+    Диагностика описывает именно запуск сбора, поэтому её нельзя достоверно
+    вычислить заново по уже сохранённым материалам. Если кэш был создан старой
+    версией приложения без этого поля, используем лист «Диагностика» последнего
+    отчёта и помечаем только добавленные после него источники как ожидающие.
+    """
+    source_map = {source["name"]: source for source in ALL_SOURCES}
+    status_map = {
+        "Успешно": "ok",
+        "Нет релевантных записей": "no-records",
+        "Недоступен": "unavailable",
+        "Ожидает": "pending",
+        "В работе": "running",
+        "Таймаут": "timeout",
+        "Ошибка": "error",
+    }
+
+    restored: dict[str, dict] = {}
+    for record in read_history_index()[:limit]:
+        filename = str(record.get("excel_file", ""))
+        if not filename or "/" in filename or "\\" in filename:
+            continue
+        path = HISTORY_DIR / filename
+        if not path.exists():
+            continue
+        try:
+            workbook = load_workbook(path, read_only=True, data_only=True)
+            if "Диагностика" not in workbook.sheetnames:
+                workbook.close()
+                continue
+            sheet = workbook["Диагностика"]
+            headers = {
+                cell.value: index
+                for index, cell in enumerate(sheet[1])
+                if cell.value
+            }
+            required = {"Источник", "Статус", "Найдено", "Принято", "Строгих", "Расширенных", "Отклонено", "Сообщение", "URL"}
+            if not required.issubset(headers):
+                workbook.close()
+                continue
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                value = lambda name: row[headers[name]] if headers[name] < len(row) else ""
+                name = str(value("Источник") or "").strip()
+                if not name or name not in source_map:
+                    continue
+                source = source_map[name]
+                restored[name] = {
+                    "name": name,
+                    "country": str(value("Страна") or source.get("country", "")),
+                    "status": status_map.get(str(value("Статус") or "").strip(), "error"),
+                    "raw_count": int(value("Найдено") or 0),
+                    "candidate_count": int(value("Найдено") or 0),
+                    "accepted_count": int(value("Принято") or 0),
+                    "strict_count": int(value("Строгих") or 0),
+                    "monitoring_count": int(value("Расширенных") or 0),
+                    "rejected_count": int(value("Отклонено") or 0),
+                    "message": str(value("Сообщение") or ""),
+                    "url": str(value("URL") or source.get("url", "")),
+                }
+            workbook.close()
+            if restored:
+                break
+        except Exception as exc:
+            logger.warning("Не удалось восстановить диагностику из %s: %s", path, exc)
+
+    if not restored:
+        return []
+    for name, source in source_map.items():
+        restored.setdefault(name, {
+            "name": name,
+            "country": source.get("country", ""),
+            "status": "pending",
+            "raw_count": 0,
+            "candidate_count": 0,
+            "accepted_count": 0,
+            "strict_count": 0,
+            "monitoring_count": 0,
+            "rejected_count": 0,
+            "message": "Источник добавлен после последнего обновления и будет проверен при следующем сборе",
+            "url": source.get("url", ""),
+        })
+    return list(restored.values())
+
+
 def configured_email_value(*values) -> str:
     for value in values:
         candidate = str(value or "").strip()
@@ -990,7 +1076,14 @@ def load_cache_from_disk() -> bool:
         data["stats"] = get_stats(articles)
         data["sources_count"] = len(ALL_SOURCES)
         data.setdefault("diagnostics", [])
-        if cache_was_normalized:
+        diagnostics_were_restored = False
+        if not data["diagnostics"]:
+            restored_diagnostics = restore_latest_diagnostics_from_history()
+            if restored_diagnostics:
+                data["diagnostics"] = restored_diagnostics
+                diagnostics_were_restored = True
+                logger.info("Диагностика восстановлена из последнего отчёта: %s источников", len(restored_diagnostics))
+        if cache_was_normalized or diagnostics_were_restored:
             normalized_payload = dict(data)
             CACHE_TEMP_FILE.write_text(
                 json.dumps(normalized_payload, ensure_ascii=False, indent=2),

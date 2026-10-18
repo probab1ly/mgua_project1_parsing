@@ -320,6 +320,38 @@ class DataQualityTests(unittest.TestCase):
                 app.CACHE_FILE = old_cache
                 app._cache_file_mtime = old_mtime
 
+    def test_diagnostics_are_restored_from_latest_excel_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            old_dir = app.HISTORY_DIR
+            old_index = app.HISTORY_INDEX_FILE
+            try:
+                app.HISTORY_DIR = Path(directory)
+                app.HISTORY_INDEX_FILE = app.HISTORY_DIR / "history.json"
+                report = app.HISTORY_DIR / "update_test.xlsx"
+                workbook = app.Workbook()
+                sheet = workbook.active
+                sheet.title = "Диагностика"
+                sheet.append([
+                    "Источник", "Страна", "Статус", "Найдено", "Принято",
+                    "Строгих", "Расширенных", "Отклонено", "Сообщение", "URL",
+                ])
+                sheet.append([
+                    "NIST News", "USA", "Успешно", 8, 2, 1, 1, 6,
+                    "ok", "https://www.nist.gov/news-events/news/rss.xml",
+                ])
+                workbook.save(report)
+                app.write_history_index([{"id": "test", "excel_file": report.name}])
+
+                diagnostics = app.restore_latest_diagnostics_from_history()
+                nist = next(item for item in diagnostics if item["name"] == "NIST News")
+                self.assertEqual(nist["status"], "ok")
+                self.assertEqual(nist["raw_count"], 8)
+                self.assertEqual(nist["accepted_count"], 2)
+                self.assertEqual(len(diagnostics), len(app.ALL_SOURCES))
+            finally:
+                app.HISTORY_DIR = old_dir
+                app.HISTORY_INDEX_FILE = old_index
+
     def test_refresh_failure_is_exposed(self):
         with patch.object(app, "fetch_all_articles", side_effect=RuntimeError("source failure")), patch.object(
             app, "release_refresh_lock"
