@@ -627,8 +627,14 @@ LEGAL_ACTOR_TERMS_LOWER = [term.lower() for term in LEGAL_ACTOR_TERMS]
 
 
 def has_term(text: str, term: str) -> bool:
+    if not isinstance(term, str) or not term:
+        return False
     pattern = r"(?<![a-z0-9])" + re.escape(term) + r"(?![a-z0-9])"
-    return re.search(pattern, text) is not None
+    try:
+        return re.search(pattern, text) is not None
+    except re.error as error:
+        logger.warning("Некорректный термин в словаре фильтрации %r: %s", term, error)
+        return False
 
 
 def has_any_term(text: str, terms: list[str]) -> bool:
@@ -642,8 +648,14 @@ def matched_terms(text: str, terms: list[str]) -> list[str]:
 def term_positions(text: str, terms: list[str]) -> list[int]:
     positions = []
     for term in terms:
+        if not isinstance(term, str) or not term:
+            continue
         pattern = r"(?<![a-z0-9])" + re.escape(term) + r"(?![a-z0-9])"
-        positions.extend(match.start() for match in re.finditer(pattern, text))
+        try:
+            positions.extend(match.start() for match in re.finditer(pattern, text))
+        except re.error as error:
+            # Один поврежденный термин не должен останавливать загрузку кэша или обновление.
+            logger.warning("Некорректный термин в словаре фильтрации %r: %s", term, error)
     return sorted(positions)
 
 

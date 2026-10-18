@@ -167,6 +167,10 @@ class AppSecurityTests(unittest.TestCase):
 
 
 class DataQualityTests(unittest.TestCase):
+    def test_term_positions_skips_invalid_terms(self):
+        positions = scraper.term_positions("ai law", ["ai", None, ""])  # type: ignore[list-item]
+        self.assertEqual(positions, [0])
+
     def test_malicious_url_is_rejected(self):
         malicious = 'https://www.nist.gov/" onmouseover="alert(1)'
         self.assertFalse(scraper.is_valid_url(malicious))
